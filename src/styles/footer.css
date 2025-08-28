@@ -1,0 +1,48 @@
+:root {
+	--nx-primary: #00f0ff;
+	--nx-bg: #0a0b10;
+	--nx-text: #e6f6ff;
+	--nx-muted: #7aa0b8;
+	--nx-border: rgba(0, 240, 255, 0.25);
+}
+
+.nx-footer {
+	border-top: 1px solid var(--nx-border);
+	background: radial-gradient(40% 60% at 50% 0%, rgba(0,240,255,0.06), transparent), #07080d;
+	position: relative;
+	color: var(--nx-text);
+}
+.nx-footer-inner {
+	max-width: 1200px;
+	margin: 0 auto;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 1.25rem 1rem;
+}
+.nx-footer-copy {
+	color: var(--nx-muted);
+}
+.nx-footer-links {
+	display: flex;
+	gap: 1rem;
+}
+.nx-footer-link {
+	color: var(--nx-text);
+	opacity: 0.8;
+	text-decoration: none;
+	transition: opacity 150ms ease;
+}
+.nx-footer-link:hover { opacity: 1; }
+
+.nx-scanlines {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	height: 2px;
+	background: repeating-linear-gradient(90deg, rgba(0,240,255,0.6) 0 20px, transparent 20px 24px);
+	filter: drop-shadow(0 0 8px rgba(0,240,255,0.6));
+}
+
+
