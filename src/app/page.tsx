@@ -15,10 +15,7 @@ export default async function Home() {
           <p className="nx-subtext">
             Dive into challenges, discuss strategies in the forum, and practice directly in the in-browser Linux terminal.
           </p>
-          <div className="nx-cta-row">
-            <Link className="nx-btn nx-btn-primary" href="/terminal">Open Terminal</Link>
-            <Link className="nx-btn" href="/forum">Visit Forum</Link>
-          </div>
+         
         </div>
       </section>
 
