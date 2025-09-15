@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/server/db";
 import jwt from "jsonwebtoken";
 import { env } from "@/env";
+import { randomUUID } from 'crypto';
 // dynamically import bcrypt at runtime to avoid TS declaration errors in some environments
 let bcrypt: typeof import("bcrypt");
 
@@ -49,7 +50,9 @@ export async function POST(req: Request) {
     // persist refresh token server-side
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   // persist refresh token via raw SQL to avoid needing prisma generate in this session
-  await db.$executeRaw`INSERT INTO RefreshToken (id, token, userId, revoked, expiresAt, createdAt) VALUES (cuid(), ${refreshToken}, ${user.id}, 0, ${expiresAt.toISOString()}, datetime('now'))`;
+  const rtId = randomUUID();
+  const createdAt = new Date().toISOString();
+  await db.$executeRaw`INSERT INTO RefreshToken (id, token, userId, revoked, expiresAt, createdAt) VALUES (${rtId}, ${refreshToken}, ${user.id}, 0, ${expiresAt.toISOString()}, ${createdAt})`;
 
     // set HttpOnly cookies
     const res = NextResponse.json({ ok: true, authenticated: true });

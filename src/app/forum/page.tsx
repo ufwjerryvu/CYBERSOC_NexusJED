@@ -1,5 +1,6 @@
 import Link from "next/link";
 import "@/styles/landing.css";
+import "@/styles/forum.css";
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
@@ -19,12 +20,32 @@ export default async function ForumPage() {
   }
 
   return (
-    <main className="nx-wrap nx-section">
-      <h2>Forum</h2>
-      <p>This is the forum placeholder. Replace with your forum implementation (Discourse, Flarum, or custom threads) when ready.</p>
-      <p>
-        <Link href="/">Back to home</Link>
-      </p>
+    <main className="nx-wrap nx-section nx-forum">
+      <h2 className="nx-forum-title">Forum</h2>
+
+      <div className="nx-forum-grid">
+        <Link href="/forum/general" className="nx-forum-card clickable">
+          <h3>NexusCTF - General</h3>
+          <p>General discussion about challenges, solutions, or just chill.</p>
+        </Link>
+
+        <section className="nx-forum-card">
+          <h3>Nexus Team Finder</h3>
+          <p>Find teammates for upcoming CTF and connect with players.</p>
+        </section>
+
+        <section className="nx-forum-card">
+          <h3>Nexus Alerts</h3>
+          <p>Announcements and alerts about scheduled maintenance, events, and urgent notices.</p>
+        </section>
+
+        <section className="nx-forum-card">
+          <h3>Nexus PEP</h3>
+          <p>Dedicated channel just for the hours hidden away at the edge of the universe.</p>
+        </section>
+      </div>
+
+    
     </main>
   );
 }

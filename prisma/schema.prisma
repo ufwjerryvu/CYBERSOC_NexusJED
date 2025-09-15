@@ -56,13 +56,17 @@ model Session {
 
 model User {
     id            String    @id @default(cuid())
-    name          String?
+    username          String? @unique
     email         String?   @unique
+    password      String?
+    isAdmin       Boolean
     emailVerified DateTime?
     image         String?
     accounts      Account[]
     sessions      Session[]
     posts         Post[]
+    refreshTokens RefreshToken[]
+    messages      Message[]
 }
 
 model VerificationToken {
@@ -71,4 +75,28 @@ model VerificationToken {
     expires    DateTime
 
     @@unique([identifier, token])
+}
+
+model RefreshToken {
+    id         String   @id @default(cuid())
+    token      String   @unique
+    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId     String
+    revoked    Boolean  @default(false)
+    expiresAt  DateTime
+    createdAt  DateTime @default(now())
+
+    @@index([token])
+}
+
+model Message {
+    id        String   @id @default(cuid())
+    text      String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId    String
+    email     String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([createdAt])
 }

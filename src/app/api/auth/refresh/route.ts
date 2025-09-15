@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import { env } from "@/env";
 import { db } from "@/server/db";
+import { randomUUID } from 'crypto';
 
 export async function POST(req: Request) {
   try {
@@ -35,8 +36,10 @@ export async function POST(req: Request) {
   // issue new tokens
   const accessToken = jwt.sign({ sub: decoded.sub, email: userEmail }, env.AUTH_SECRET || 'dev-secret', { expiresIn: '15m' });
     const newRefresh = jwt.sign({ sub: decoded.sub }, env.AUTH_SECRET || 'dev-secret', { expiresIn: '7d' });
-    const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    await db.$executeRaw`INSERT INTO RefreshToken (id, token, userId, revoked, expiresAt, createdAt) VALUES (cuid(), ${newRefresh}, ${decoded.sub}, 0, ${expiresAt.toISOString()}, datetime('now'))`;
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const rtId = randomUUID();
+  const createdAt = new Date().toISOString();
+  await db.$executeRaw`INSERT INTO RefreshToken (id, token, userId, revoked, expiresAt, createdAt) VALUES (${rtId}, ${newRefresh}, ${decoded.sub}, 0, ${expiresAt.toISOString()}, ${createdAt})`;
 
     const res = NextResponse.json({ ok: true });
     const secure = env.NODE_ENV === 'production';
