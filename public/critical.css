@@ -1,0 +1,10 @@
+/* Critical styles loaded immediately to prevent white flash before app CSS loads */
+html, body {
+  background-color: #05060a !important;
+  color: #e6f6ff !important;
+  height: 100% !important;
+}
+
+/* Ensure root container uses flex to push footer down */
+body.nx-app { display: flex !important; flex-direction: column !important; min-height: 100vh !important; }
+.nx-main { flex: 1 0 auto !important; }

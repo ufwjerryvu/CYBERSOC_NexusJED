@@ -11,6 +11,7 @@
 	background: radial-gradient(40% 60% at 50% 0%, rgba(0,240,255,0.06), transparent), #07080d;
 	position: relative;
 	color: var(--nx-text);
+	margin-top: auto;
 }
 .nx-footer-inner {
 	max-width: 1200px;

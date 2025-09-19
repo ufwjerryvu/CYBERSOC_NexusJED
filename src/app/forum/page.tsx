@@ -20,7 +20,7 @@ export default async function ForumPage() {
   }
 
   return (
-    <main className="nx-wrap nx-section nx-forum">
+    <main>
       <h2 className="nx-forum-title">Forum</h2>
 
       <div className="nx-forum-grid">

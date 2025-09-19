@@ -22,10 +22,17 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geist.variable}`}>
-      <body>
+    <html lang="en" className={`${geist.variable}`} style={{ backgroundColor: '#05060a', color: '#e6f6ff' }}>
+      <head>
+        <meta name="theme-color" content="#05060a" />
+        <link rel="preload" href="/critical.css" as="style" />
+        <link rel="stylesheet" href="/critical.css" />
+      </head>
+      <body className="nx-app" style={{ background: 'var(--nx-bg)', color: 'var(--nx-text)' }}>
         <Navbar />
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        <main className="nx-main">
+          <TRPCReactProvider>{children}</TRPCReactProvider>
+        </main>
         <Footer />
       </body>
     </html>

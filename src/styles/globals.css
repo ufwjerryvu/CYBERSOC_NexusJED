@@ -1,6 +1,29 @@
 @import "tailwindcss";
 
-@theme {
+:root {
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
+:root {
+  --nx-bg: #05060a;
+  --nx-text: #e6f6ff;
+}
+
+html, body, #__next {
+  height: 100%;
+}
+
+body.nx-app {
+  background: var(--nx-bg);
+  color: var(--nx-text);
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.nx-main {
+  flex: 1 0 auto;
+}
+
+/* Ensure footer stays at bottom */
+.nx-footer { flex-shrink: 0; }
