@@ -9,28 +9,29 @@ export async function GET(req: Request) {
     const match = cookie.split(';').map(c=>c.trim()).find(c=>c.startsWith('access_token='));
     const token = match ? match.replace('access_token=', '') : null;
 
-    if (!token) return NextResponse.json({ authenticated: false });
+    if (!token) return NextResponse.json({ username: null });
 
     try {
       const decoded = jwt.verify(token, env.AUTH_SECRET || 'dev-secret') as any;
-      // try to fetch username from DB (by id, then by email)
-      let username = null;
+      // fetch username. First try by id, then fall back to email if id doesn't match.
       try {
         let rows: any = await db.$queryRaw`SELECT username FROM User WHERE id = ${decoded.sub} LIMIT 1`;
-        if (Array.isArray(rows) && rows[0] && rows[0].username) username = rows[0].username;
+        let username = Array.isArray(rows) && rows[0] && rows[0].username ? rows[0].username : null;
         if (!username && decoded.email) {
           rows = await db.$queryRaw`SELECT username FROM User WHERE lower(email) = lower(${decoded.email}) LIMIT 1`;
-          if (Array.isArray(rows) && rows[0] && rows[0].username) username = rows[0].username;
+          username = Array.isArray(rows) && rows[0] && rows[0].username ? rows[0].username : null;
         }
+        console.log('fetched username', username);
+        return NextResponse.json({ username });
       } catch (err) {
-        // ignore DB errors and continue with email-only response
+        console.error('db error fetching username', err);
+        return NextResponse.json({ username: null });
       }
-      return NextResponse.json({ authenticated: true, user: { id: decoded.sub, email: decoded.email, username } });
     } catch (err) {
-      return NextResponse.json({ authenticated: false });
+      return NextResponse.json({ username: null });
     }
   } catch (err) {
-    console.error('session error', err);
-    return NextResponse.json({ authenticated: false });
+    console.error('me error', err);
+    return NextResponse.json({ username: null });
   }
 }

@@ -1,5 +1,8 @@
 import { createEnv } from "@t3-oss/env-nextjs";
+import { io } from "socket.io-client";
 import { z } from "zod";
+
+export const socket = io("ws://localhost:8080/", {});
 
 export const env = createEnv({
   /**
