@@ -29,20 +29,20 @@ export default async function ForumPage() {
           <p>General discussion about challenges, solutions, or just chill.</p>
         </Link>
 
-        <section className="nx-forum-card">
+        <Link href="/forum/team-finder" className="nx-forum-card clickable">
           <h3>Nexus Team Finder</h3>
           <p>Find teammates for upcoming CTF and connect with players.</p>
-        </section>
+        </Link>
 
-        <section className="nx-forum-card">
+        <Link href="/forum/alerts" className="nx-forum-card clickable">
           <h3>Nexus Alerts</h3>
           <p>Announcements and alerts about scheduled maintenance, events, and urgent notices.</p>
-        </section>
+        </Link>
 
-        <section className="nx-forum-card">
+        <Link href="/forum/pep" className="nx-forum-card clickable">
           <h3>Nexus PEP</h3>
           <p>Dedicated channel just for the hours hidden away at the edge of the universe.</p>
-        </section>
+        </Link>
       </div>
 
     

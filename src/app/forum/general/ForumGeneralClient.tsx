@@ -15,7 +15,7 @@ export default function ForumGeneralClient() {
         const chatRef = useRef<HTMLDivElement | null>(null);
         const [sendCooldown, setSendCooldown] = useState(false);
         const cooldownTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-        const pendingOwn = useRef<Map<string, number>>(new Map());
+    const pendingOwn = useRef<Map<string, number>>(new Map());
         const didInitScroll = useRef<boolean>(false);
 
     const scrollToBottom = () => {
@@ -31,10 +31,18 @@ export default function ForumGeneralClient() {
         }
         setTimeout(() => scrollToBottom(), 50);
     };
+    const isAtBottom = () => {
+        if (!chatRef.current) return false;
+        const el = chatRef.current;
+        const threshold = 64; // px tolerance for "near bottom"
+        return (el.scrollHeight - el.scrollTop - el.clientHeight) <= threshold;
+    };
     useEffect(() => {
-        const handler = (msg: any) => {
+    const handler = (msg: any) => {
             // msg can be either a string (old) or an object { message, sender }
             const now = new Date().toISOString();
+            // Expect channel-specific event; ignore if not for 'general'
+            if (msg && typeof msg === 'object' && typeof msg.channel === 'string' && msg.channel.toLowerCase() !== 'general') return;
             const raw = typeof msg === 'string' ? msg : (msg && typeof msg === 'object' ? String(msg.message ?? '') : '');
             let sender: string | null = null;
             if (msg && typeof msg === 'object' && msg.sender) sender = String(msg.sender);
@@ -45,7 +53,10 @@ export default function ForumGeneralClient() {
             const bodyMatch = raw.match(/^\s*([^:]{1,60}):\s*(.*)$/);
             const bodyOnly = bodyMatch ? String(bodyMatch[2] ?? '') : raw;
             const own = Boolean(username && ((sender && sender === username) || raw.startsWith(`${username}: `)));
-            const adminFlag = own && isAdmin ? true : false;
+            const wasAtBottom = !own && isAtBottom();
+                        const adminFlag = (msg && typeof msg === 'object' && typeof msg.admin === 'boolean')
+                            ? Boolean(msg.admin)
+                            : (own && isAdmin ? true : false);
             // dedupe own echo if we optimistically appended
             if (own) {
                 const key = `${username ?? ''}|${bodyOnly}`;
@@ -56,14 +67,16 @@ export default function ForumGeneralClient() {
                 }
             }
             setMessages(prev => [...prev, { message: raw, sender, timestamp: now, admin: adminFlag }]);
-            // auto scroll to bottom on own message arrival
-            if (own && chatRef.current) {
+            // auto scroll to bottom
+            // - on own message arrival, always
+            // - on external message only if user was already at/near bottom
+            if ((own || wasAtBottom) && chatRef.current) {
                 setTimeout(() => { ensureScrollToBottom(); }, 0);
             }
         };
-        socket.on("message", handler);
+        socket.on("message:general", handler);
         return () => {
-            socket.off("message", handler);
+            socket.off("message:general", handler);
         }
     }, [username, isAdmin]);
     useEffect(() => {
@@ -85,7 +98,7 @@ export default function ForumGeneralClient() {
         (async () => {
             try {
                 setLoadingInit(true);
-                const res = await fetch('/api/messages?limit=15', { credentials: 'include' });
+                const res = await fetch('/api/messages/general?limit=15', { credentials: 'include' });
                 if (res.ok) {
                     const data = await res.json();
                     const items: Array<{message: string; sender: string | null; timestamp: string; admin?: boolean}> = data?.items ?? [];
@@ -132,7 +145,7 @@ export default function ForumGeneralClient() {
             setLoadingMore(true);
             const minDelay = new Promise(res => setTimeout(res, 500));
             const before = encodeURIComponent(oldestTs);
-            const res = await fetch(`/api/messages?limit=15&before=${before}`, { credentials: 'include' });
+            const res = await fetch(`/api/messages/general?limit=15&before=${before}`, { credentials: 'include' });
             if (!res.ok) return;
             const data = await res.json();
             const older: Array<{message: string; sender: string | null; timestamp: string}> = data?.items ?? [];
@@ -208,10 +221,11 @@ export default function ForumGeneralClient() {
             ensureScrollToBottom();
 
             // include sender derived from session (socket broadcast)
-            await axios.post('http://localhost:8080/api/message', { message: finalMessage, sender: uname });
+            // route through same-origin Next.js proxy to avoid CORS issues
+            await axios.post('/api/socket-proxy/message', { message: finalMessage, sender: uname, channel: 'general', admin: isAdmin });
             // persist message to DB via Next.js API (store only the text content, server infers user)
             try {
-                await fetch('/api/messages', {
+                await fetch('/api/messages/general', {
                     method: 'POST',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
@@ -231,12 +245,19 @@ export default function ForumGeneralClient() {
     return (
         <main>
             <div>
-                <div>
-                    <h1>General</h1>
-                </div>
+                <br/>
 
                 <div className="nx-chat">
-                    <div className="nx-chat-window" ref={chatRef} onScroll={handleScroll}>
+                    <div className="nx-chat-window" ref={chatRef} onScroll={handleScroll} style={{ position: 'relative' }}>
+                        {loadingInit ? (
+                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+                                    <div style={{ width: 32, height: 32, borderRadius: '50%', border: '3px solid white', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
+                                    <div style={{ fontSize: 14, opacity: 0.85 }}>Fetching Nexus logs…</div>
+                                </div>
+                                <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+                            </div>
+                        ) : null}
                         {loadingMore ? (
                             <div style={{ position: 'sticky', top: 0, display: 'flex', justifyContent: 'center', padding: '4px' }}>
                                 <div style={{ width: 16, height: 16, borderRadius: '50%', border: '2px solid white', borderTopColor: 'transparent', animation: 'spin 0.8s linear infinite' }} />
