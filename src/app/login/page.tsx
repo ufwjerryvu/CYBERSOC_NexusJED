@@ -82,7 +82,7 @@ export default function LoginPage() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com [CASE SENSITIVE]"
+              placeholder="you@example.com"
               required
             />
           </label>

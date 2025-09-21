@@ -21,7 +21,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: false, error: 'Missing email or password' }, { status: 400 });
     }
 
-    // find user case-insensitively
+    // find user with case-insensitive match by normalizing both sides to lowercase
     const rows: Array<{ id: string; password: string | null }> = await db.$queryRaw`
       SELECT id, password FROM User WHERE lower(email) = lower(${email}) LIMIT 1`;
 
