@@ -24,6 +24,7 @@ model Message {
   id        String   @id @default(cuid())
   text      String?                     // optional
   image     String?                     // optional (store URL or file path)
+  images    Json?                       // optional (array of image URLs)
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
   email     String?
