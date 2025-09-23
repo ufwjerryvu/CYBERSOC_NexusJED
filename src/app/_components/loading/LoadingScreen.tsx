@@ -3,7 +3,7 @@
 export default function LoadingScreen() {
   return (
     <main className="bg-black text-white font-sans min-h-screen overflow-x-hidden relative flex items-center justify-center">
-      {/* Animated Grid Background */}
+    
       <div
         className="fixed inset-0 opacity-30 -z-10"
         style={{
@@ -45,13 +45,4 @@ export default function LoadingScreen() {
     </main>
   );
 }
-"use client";
-
-export default function LoadingScreen() {
-  return (
-    <main>
-      <h1>Loading...</h1>
-      <p>Please wait</p>
-    </main>
-  );
-}
+ 
