@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import LoadingScreen from "~/app/_components/loading/LoadingScreen";
 
 function getCookie(name: string): string | null {
 	const match = document.cookie
@@ -15,10 +16,16 @@ function getCookie(name: string): string | null {
 export default function ForumPage() {
 	const router = useRouter();
 	const [email, setEmail] = useState<string | null>(null);
+	const [checking, setChecking] = useState(true);
 
 	useEffect(() => {
 		const tokenEmail = getCookie("access_token");
+		if (!tokenEmail) {
+			router.replace("/login");
+			return;
+		}
 		setEmail(tokenEmail);
+		setChecking(false);
 	}, []);
 
 	const handleLogout = () => {
@@ -26,7 +33,11 @@ export default function ForumPage() {
 		router.push("/login");
 	};
 
-	return (
+		if (checking) {
+			return <LoadingScreen />;
+		}
+
+		return (
 		<main>
 			<h1>Forum</h1>
 			{email ? (

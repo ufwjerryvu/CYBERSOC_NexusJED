@@ -7,10 +7,7 @@ export type TokenValidationResult =
   | { ok: true; email: string }
   | { ok: false; code: "MISSING" | "INVALID" | "NOT_FOUND" | "SERVER_ERROR" };
 
-/**
- * Checks the `access_token` cookie and verifies that it corresponds to a user email in the DB.
- * For now, the token is simply the user's email (plaintext), as requested.
- */
+
 export async function validateAccessToken(): Promise<TokenValidationResult> {
   try {
     const cookieStore = await cookies();

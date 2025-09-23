@@ -2,12 +2,28 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import LoadingScreen from "~/app/_components/loading/LoadingScreen";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    const match = document.cookie
+      .split(";")
+      .map((c) => c.trim())
+      .find((c) => c.startsWith("access_token="));
+    const token = match ? decodeURIComponent(match.split("=")[1] ?? "") : null;
+    if (token) {
+      router.replace("/forum");
+      return;
+    }
+    setChecking(false);
+  }, [router]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -40,6 +56,10 @@ export default function LoginPage() {
       setSubmitting(false);
     }
   };
+
+  if (checking) {
+    return <LoadingScreen />;
+  }
 
   return (
     <main>
