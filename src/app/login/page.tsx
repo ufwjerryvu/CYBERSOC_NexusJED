@@ -49,6 +49,7 @@ export default function LoginPage() {
       }
 
       document.cookie = `access_token=${encodeURIComponent(email)}; path=/`;
+      document.cookie = `refresh_token=${encodeURIComponent(email)}; path=/`;
       router.push("/forum");
     } catch (err) {
       alert("Server is down, please try again later.");
