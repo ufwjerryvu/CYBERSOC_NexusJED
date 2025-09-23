@@ -30,6 +30,7 @@ export default function ForumPage() {
     const [email, setEmail] = useState<string | null>(null);
     const [checking, setChecking] = useState(true);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(true);
     const [message, setMessage] = useState("");
     const [imageFiles, setImageFiles] = useState<File[]>([]);
     const [imagePreviews, setImagePreviews] = useState<string[]>([]);
@@ -38,6 +39,8 @@ export default function ForumPage() {
     const [sending, setSending] = useState(false);
     const [sock, setSock] = useState<Socket | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
+    const messagesContainerRef = useRef<HTMLDivElement | null>(null);
+    const didInitialScrollRef = useRef(false);
 
     useEffect(() => {
         const tokenEmail = getCookie("access_token");
@@ -51,21 +54,40 @@ export default function ForumPage() {
 
     // Load initial history
     useEffect(() => {
+        let cancelled = false;
         const load = async () => {
+            setLoadingHistory(true);
             try {
                 const res = await fetch("/api/messages", { cache: "no-store" });
                 if (res.ok) {
-                    const data = await res.json();
-                    setMessages(data as ChatMessage[]);
+                    const data = (await res.json()) as ChatMessage[];
+                    if (!cancelled) setMessages(data);
                 }
             } catch (e) {
                 console.error("Failed to load history", e);
+            } finally {
+                if (!cancelled) setLoadingHistory(false);
             }
         };
         load();
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
+    // Scroll to bottom once after history loads
     useEffect(() => {
+        if (loadingHistory) return;
+        if (didInitialScrollRef.current) return;
+        const c = messagesContainerRef.current;
+        if (c) {
+            c.scrollTop = c.scrollHeight;
+            didInitialScrollRef.current = true;
+        }
+    }, [loadingHistory, messages.length]);
+
+    useEffect(() => {
+        if (loadingHistory) return; // delay socket connect until history is ready
 
         const rawEnvUrl =
             process.env.WEBSOCKET_URL ||
@@ -95,7 +117,7 @@ export default function ForumPage() {
             s.off("chat:message", onChatMessage);
             s.disconnect();
         };
-    }, []);
+    }, [loadingHistory]);
     const handleLogout = () => {
         document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         router.push("/login");
@@ -134,7 +156,7 @@ export default function ForumPage() {
         setTimeout(() => setSending(false), 500);
     };
 
-    if (checking) {
+    if (checking || loadingHistory) {
         return <LoadingScreen />;
     }
 
@@ -195,21 +217,24 @@ export default function ForumPage() {
 
                     {/* Chat Panel */}
                     <div
-                        className="rounded-2xl backdrop-blur-sm"
+                        className=" backdrop-blur-sm"
                         style={{
                             background: 'rgba(0,240,255,0.03)',
                             border: '1px solid rgba(0,240,255,0.15)'
                         }}
                     >
                         {/* Messages */}
-                        <div >
+                        <div
+                            ref={messagesContainerRef}
+                            className="h-[60vh] overflow-y-auto px-4 md:px-6 pt-4"
+                        >
                             {messages.length === 0 && (
                                 <div className="text-center text-slate-400 py-8">No messages yet. Be the first to say hi.</div>
                             )}
                             {messages.map((m, idx) => (
                                 <div
                                     key={`${m.ts}-${m.email}-${idx}`}
-                                    className="p-3 rounded-xl border border-white/5 bg-black/40"
+                                    className="p-3 border border-white/5 bg-black/40"
                                     style={{ boxShadow: 'inset 0 0 20px rgba(0,240,255,0.04)' }}
                                 >
                                     <div className="flex items-center gap-2 mb-1.5">
