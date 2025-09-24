@@ -3,6 +3,7 @@
 import { Terminal } from "@xterm/xterm";
 import { useEffect, useRef } from "react";
 import "@xterm/xterm/css/xterm.css";
+import Navbar from "../_components/global/Navbar";
 
 const TerminalPage = () => {
     const terminalRef = useRef<HTMLDivElement | null>(null);
@@ -13,7 +14,7 @@ const TerminalPage = () => {
         const initTerminal = async () => {
 
             if (!terminalRef.current) return;
-            
+
             /* Dynamic imports to stop the transpiler from screaming at me */
             const { Terminal } = await import("@xterm/xterm");
             const { FitAddon } = await import("@xterm/addon-fit");
@@ -82,29 +83,31 @@ const TerminalPage = () => {
     }, []);
 
     return (
-        <div className="min-h-screen bg-gradient-to-b from-[#090b12] to-[#05060a] text-[#e6f6ff]">
-            <div className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,240,255,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,240,255,0.08)_1px,transparent_1px)] bg-[size:32px_32px] opacity-35" />
+        <>
+            <Navbar />
 
-                <div className="relative max-w-6xl mx-auto p-8">
-                    <div className="text-center mb-8">
-                        <h1 className="text-5xl font-black tracking-wider bg-gradient-to-r from-[#00f0ff] to-[#8a2be2] bg-clip-text text-transparent">
-                            Terminal
-                        </h1>
-                        <p className="text-[#8db3c7] mt-2">Full interactive terminal with real shell access</p>
-                    </div>
-
-                    <div className="rounded-2xl border border-[rgba(0,240,255,0.25)] bg-[#0c0f17] p-4 shadow-[inset_0_0_32px_rgba(0,240,255,0.05)]">
-                        <div className="flex gap-1.5 mb-3">
-                            <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
-                            <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
-                            <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
+            <div className="min-h-screen bg-gradient-to-b from-[#090b12] to-[#05060a] text-[#e6f6ff] pt-16">
+                <div className="relative overflow-hidden">
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,240,255,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,240,255,0.08)_1px,transparent_1px)] bg-[size:32px_32px] opacity-35" />
+                    <div className="relative max-w-6xl mx-auto p-8">
+                        <div className="text-center mb-8">
+                            <h1 className="text-5xl font-[900] bg-gradient-to-r from-[#00f0ff] via-[#8a2be2] to-[#ff00ff] bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(0,240,255,0.5)] inline-block">
+                                Terminal
+                            </h1>
                         </div>
-                        <div ref={terminalRef} className="h-[500px]" />
+
+                        <div className="rounded-2xl border border-[rgba(0,240,255,0.25)] bg-[#0c0f17] p-4 shadow-[inset_0_0_32px_rgba(0,240,255,0.05)]">
+                            <div className="flex gap-1.5 mb-3">
+                                <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+                                <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+                                <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
+                            </div>
+                            <div ref={terminalRef} className="h-[1000px]" />
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </>
     )
 }
 
