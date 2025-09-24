@@ -24,8 +24,12 @@ io.on("connection", (socket) => {
     try {
       const email = payload && typeof payload.email === "string" ? payload.email : "";
       const text = payload && typeof payload.text === "string" ? payload.text : "";
+      const images = Array.isArray(payload && payload.images)
+        ? (payload.images || []).filter((u) => typeof u === "string" && u.length > 0)
+        : [];
 
-      if (!email || !text) {
+      // Require email and at least text or one image
+      if (!email || (!text && images.length === 0)) {
         socket.emit("chat:error", { message: "Invalid payload" });
         return;
       }
@@ -34,7 +38,44 @@ io.on("connection", (socket) => {
   const admin_attr = Boolean(user && user.isAdmin);
   const username = (user && user.username) || (email.includes("@") ? email.split("@")[0] : email);
 
-      const messageOut = { text, email, username, admin_attr, ts: Date.now() };
+      // Persist message with graceful fallback if Prisma client hasn't been regenerated yet
+      let saved;
+      try {
+        saved = await prisma.message.create({
+          data: {
+            text: text || null,
+            image: images.length === 1 ? images[0] : null, // legacy single image
+            // @ts-ignore - 'images' is a new JSON column; types update after prisma generate
+            images: images.length > 0 ? images : null,     // preferred array
+            email,
+            userId: user ? user.id : (await ensureUser(email)).id,
+            channel: "general",
+          },
+          include: { user: true },
+        });
+      } catch (e) {
+        const errMsg = (e && /** @type {any} */(e).message) ? /** @type {any} */(e).message : e;
+        console.warn("[forum-ws] create with images JSON failed, retrying without images column", errMsg);
+        saved = await prisma.message.create({
+          data: {
+            text: text || null,
+            image: images.length > 0 ? images[0] : null,
+            email,
+            userId: user ? user.id : (await ensureUser(email)).id,
+            channel: "general",
+          },
+          include: { user: true },
+        });
+      }
+
+      const messageOut = {
+        text: saved.text || "",
+        images: images.length > 0 ? images : (saved.image ? [saved.image] : undefined),
+        email: saved.email || email,
+        username,
+        admin_attr,
+        ts: new Date(saved.createdAt).getTime(),
+      };
       io.emit("chat:message", messageOut);
     } catch (err) {
       console.error("[forum-ws] error handling chat:message", err);
@@ -68,3 +109,13 @@ server.listen(PORT, () => {
 });
 
 module.exports = { io };
+
+/**
+ * @param {string} email
+ */
+async function ensureUser(email) {
+  // create minimal user if not exists to satisfy FK
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) return existing;
+  return prisma.user.create({ data: { email, isAdmin: false } });
+}
