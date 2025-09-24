@@ -11,6 +11,8 @@ console.log(`Terminal WS server is running on port ${port}`);
 const DOCKER_IMAGE = 'ubuntu:latest';
 const connections = new Map();
 
+const IDLE_TIMEOUT = 10 * 1000;     /* In milliseconds */
+
 wss.on("connection", (ws, req) => {
     const containerId = crypto.randomBytes(8).toString("hex");
     
@@ -30,10 +32,12 @@ wss.on("connection", (ws, req) => {
         "/bin/bash"
     ], {
         name: "xterm-color",
-        cols: 80,
-        rows: 30,
+        cols: 200,
+        rows: 100,
         encoding: "utf-8"
     })
+
+    dockerRun.resize(300, 100);
 
     connections.set(ws, {ptyProcess: dockerRun, containerId});
 
@@ -50,6 +54,23 @@ wss.on("connection", (ws, req) => {
         ws.close();
     });
 
+    // @ts-ignore
+    let idleTimer;
+    const resetIdleTimer = () => {
+
+        // @ts-ignore
+        clearTimeout(idleTimer);
+
+        idleTimer = setTimeout(() => {
+            console.log(`Idle timeout for container ${containerId}`);
+            ws.send(`Idle for too long. Container ${containerId} has disconnected. 
+                Maximum time limit for terminal is ${IDLE_TIMEOUT}ms.`);
+            ws.close();
+        }, IDLE_TIMEOUT);
+    };
+
+    resetIdleTimer();
+
     /* User types in and send to terminal to update */
     ws.on("message", (data) => {
         dockerRun.write(data.toString());
@@ -58,6 +79,10 @@ wss.on("connection", (ws, req) => {
     /* Client disconnects so kill the process, and get rid of the client WS in
         the map */
     ws.on("close", () => {
+
+        // @ts-ignore
+        clearTimeout(idleTimer);
+
         console.log(`Client disconnected, stopping container ${containerId}`);
         const connection = connections.get(ws);
         
