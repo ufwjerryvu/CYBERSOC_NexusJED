@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import LoadingScreen from "~/app/_components/loading/LoadingScreen";
 import Modal from "~/app/_components/modal/Modal";
 import { io, type Socket } from "socket.io-client";
+import Navbar from "../_components/global/Navbar";
 
 function getCookie(name: string): string | null {
     const match = document.cookie
@@ -161,6 +162,10 @@ export default function ForumPage() {
     }
 
     return (
+        <>
+        <Navbar/>
+        <br/>
+        <br/>
         <main className="bg-black text-white font-sans min-h-screen overflow-x-hidden relative">
             {/* Animated Grid Background (matches home theme) */}
             <div
@@ -201,18 +206,7 @@ export default function ForumPage() {
                         >
                             Nexus Logs
                         </h1>
-                        <button
-                            onClick={handleLogout}
-                            className="px-4 py-2 rounded-full text-sm font-semibold transition-all"
-                            style={{
-                                background: 'linear-gradient(135deg, #8a2be2, #00f0ff)',
-                                boxShadow: '0 4px 20px rgba(0,240,255,0.25)'
-                            }}
-                            onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,240,255,0.45)')}
-                            onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,240,255,0.25)')}
-                        >
-                            Logout
-                        </button>
+                        
                     </div>
 
                     {/* Chat Panel */}
@@ -430,6 +424,7 @@ export default function ForumPage() {
                 </div>
             </section>
         </main>
+        </>
     );
 }
 

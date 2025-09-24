@@ -1,0 +1,114 @@
+'use client';
+
+import { Terminal } from "@xterm/xterm";
+import { useEffect, useRef } from "react";
+import "@xterm/xterm/css/xterm.css";
+import Navbar from "../_components/global/Navbar";
+
+const TerminalPage = () => {
+    const terminalRef = useRef<HTMLDivElement | null>(null);
+    const termRef = useRef<Terminal | null>(null);
+    const wsRef = useRef<WebSocket | null>(null);
+
+    useEffect(() => {
+        const initTerminal = async () => {
+
+            if (!terminalRef.current) return;
+
+            /* Dynamic imports to stop the transpiler from screaming at me */
+            const { Terminal } = await import("@xterm/xterm");
+            const { FitAddon } = await import("@xterm/addon-fit");
+            const { WebLinksAddon } = await import("@xterm/addon-web-links");
+            const { AttachAddon } = await import("@xterm/addon-attach");
+
+            const term = new Terminal({
+                cursorBlink: true,
+                fontSize: 14,
+                fontFamily: 'Menlo, Monaco, \"Courier New\", monospace',
+                theme: {
+                    background: "#0c0f17",          /* Darkish but not fully black */
+                    foreground: "#e6f6ff",
+                    cursor: '#00f0ff',
+                    selectionBackground: "rgba(0, 240, 255, 0.3)"
+                }
+            });
+
+            termRef.current = term;
+
+            /* Addons. `FitAddon` resizes the terminal to fit its container and 
+                `WebLinksAddon()` is to make sure the user can click the link. */
+            const fitAddon = new FitAddon();
+            const webLinksAddon = new WebLinksAddon();
+
+            term.loadAddon(fitAddon);
+            term.loadAddon(webLinksAddon);
+
+            if (terminalRef.current) {
+                term.open(terminalRef.current);
+            } else {
+                console.error("Error initializing the frontend terminal");
+            }
+
+            /* Making the connection */
+            try {
+                wsRef.current = new WebSocket("ws://localhost:5050");
+
+                wsRef.current.onopen = () => {
+                    const attachAddon = new AttachAddon(wsRef.current!);
+                    term.loadAddon(attachAddon);
+                    term.write("\x1b[32mConnected to terminal server\x1b[0m\r\n")
+                };
+
+                wsRef.current.onerror = () => {
+                    term.write('\x1b[31mFailed to connect to terminal server.\x1b[0m\r\n');
+                    term.write('Run: \x1b[33mnode server.js\x1b[0m in another terminal\r\n');
+                };
+            } catch (err) {
+                term.write('\x1b[31mWebSocket connection failed\x1b[0m\r\n');
+                console.log(err);
+            }
+
+            /* Window resize handling using the add-on */
+            const handleResize = () => fitAddon.fit();
+            window.addEventListener("resize", handleResize);
+
+            return () => {
+                window.removeEventListener("resize", handleResize);
+                wsRef.current?.close();
+                term.dispose();
+            }
+        }
+
+        initTerminal();
+    }, []);
+
+    return (
+        <>
+            <Navbar />
+
+            <div className="min-h-screen bg-gradient-to-b from-[#090b12] to-[#05060a] text-[#e6f6ff] pt-16">
+                <div className="relative overflow-hidden">
+                    <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,240,255,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,240,255,0.08)_1px,transparent_1px)] bg-[size:32px_32px] opacity-35" />
+                    <div className="relative max-w-6xl mx-auto p-8">
+                        <div className="text-center mb-8">
+                            <h1 className="text-5xl font-[900] bg-gradient-to-r from-[#00f0ff] via-[#8a2be2] to-[#ff00ff] bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(0,240,255,0.5)] inline-block">
+                                Terminal
+                            </h1>
+                        </div>
+
+                        <div className="rounded-2xl border border-[rgba(0,240,255,0.25)] bg-[#0c0f17] p-4 shadow-[inset_0_0_32px_rgba(0,240,255,0.05)]">
+                            <div className="flex gap-1.5 mb-3">
+                                <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+                                <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+                                <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
+                            </div>
+                            <div ref={terminalRef} className="h-[1000px]" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </>
+    )
+}
+
+export default TerminalPage;

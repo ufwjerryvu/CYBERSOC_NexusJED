@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import LoadingScreen from "~/app/_components/loading/LoadingScreen";
+import Navbar from "../_components/global/Navbar";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -63,6 +64,8 @@ export default function LoginPage() {
   }
 
   return (
+    <>
+    <Navbar/>
     <main className="bg-black text-white font-sans min-h-screen overflow-x-hidden relative">
       {/* Animated Grid Background */}
       <div
@@ -157,5 +160,6 @@ export default function LoginPage() {
         </div>
       </section>
     </main>
+    </>
   );
 }
