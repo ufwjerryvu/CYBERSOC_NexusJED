@@ -163,10 +163,8 @@ export default function ForumPage() {
 
     return (
         <>
-        <Navbar/>
-        <br/>
-        <br/>
-        <main className="bg-black text-white font-sans min-h-screen overflow-x-hidden relative">
+                <Navbar/>
+                <main className="bg-black text-white font-sans h-screen overflow-hidden overflow-x-hidden relative">
             {/* Animated Grid Background (matches home theme) */}
             <div
                 className="fixed inset-0 opacity-30 -z-10"
@@ -187,12 +185,33 @@ export default function ForumPage() {
                   from { filter: drop-shadow(0 0 20px rgba(0,240,255,0.5)); }
                   to { filter: drop-shadow(0 0 30px rgba(138,43,226,0.8)); }
                 }
+                                /* Themed, sleek scrollbar for messages list */
+                                .nice-scrollbar {
+                                    scrollbar-width: thin;
+                                    scrollbar-color: rgba(138,43,226,0.8) rgba(0,240,255,0.08);
+                                }
+                                .nice-scrollbar::-webkit-scrollbar {
+                                    width: 10px;
+                                }
+                                .nice-scrollbar::-webkit-scrollbar-track {
+                                    background: rgba(0,240,255,0.08);
+                                    border-left: 1px solid rgba(0,240,255,0.12);
+                                }
+                                .nice-scrollbar::-webkit-scrollbar-thumb {
+                                    background: linear-gradient(180deg, rgba(0,240,255,0.6), rgba(138,43,226,0.8));
+                                    border-radius: 12px;
+                                    border: 2px solid rgba(0,0,0,0.6);
+                                    box-shadow: inset 0 0 6px rgba(0,0,0,0.3), 0 0 10px rgba(0,240,255,0.35);
+                                }
+                                .nice-scrollbar::-webkit-scrollbar-thumb:hover {
+                                    background: linear-gradient(180deg, rgba(0,240,255,0.75), rgba(138,43,226,0.95));
+                                }
               `}</style>
 
-            <section className="min-h-screen flex items-center justify-center py-14">
-                <div className="w-full max-w-5xl mx-auto px-5">
+                        <section className="h-full pt-20 flex items-stretch justify-center">
+                                <div className="w-full max-w-5xl mx-auto px-5 flex flex-col h-full">
                     {/* Header */}
-                    <div className="flex items-center justify-between mb-6">
+                                        <div className="flex items-center justify-between mb-6">
                         <h1
                             className="text-3xl md:text-4xl font-black"
                             style={{
@@ -211,7 +230,7 @@ export default function ForumPage() {
 
                     {/* Chat Panel */}
                     <div
-                        className=" backdrop-blur-sm"
+                        className="backdrop-blur-sm flex flex-col flex-1 min-h-0"
                         style={{
                             background: 'rgba(0,240,255,0.03)',
                             border: '1px solid rgba(0,240,255,0.15)'
@@ -220,7 +239,7 @@ export default function ForumPage() {
                         {/* Messages */}
                         <div
                             ref={messagesContainerRef}
-                            className="h-[60vh] overflow-y-auto px-4 md:px-6 pt-4"
+                            className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 pt-4 nice-scrollbar"
                         >
                             {messages.length === 0 && (
                                 <div className="text-center text-slate-400 py-8">No messages yet. Be the first to say hi.</div>
