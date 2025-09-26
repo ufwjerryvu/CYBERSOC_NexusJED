@@ -1,33 +1,13 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const router = useRouter();
+  const isLoggedIn = false;
 
   const toggleMenu = () => setIsOpen(!isOpen);
-
-  useEffect(() => {
-    // Check for access token cookie on mount
-    const cookies = document.cookie
-      .split(';')
-      .map((c) => c.trim());
-    const tokenCookie = cookies.find((c) => c.startsWith('access_token='));
-    setIsLoggedIn(Boolean(tokenCookie));
-  }, []);
-
-  const handleLogout = () => {
-    // Clear cookies (set Max-Age=0) and route to home
-    document.cookie = 'access_token=; Max-Age=0; path=/';
-    document.cookie = 'refresh_token=; Max-Age=0; path=/';
-    setIsLoggedIn(false);
-    setIsOpen(false);
-    router.push('/');
-  };
 
   return (
     <>
@@ -81,28 +61,19 @@ const Navbar: React.FC = () => {
             {/* Desktop Auth Buttons */}
             <div className="hidden md:flex items-center">
               <ul className="flex items-center space-x-2 list-none m-0 p-0">
-                {isLoggedIn ? (
-                  <li>
-                    <button
-                      onClick={handleLogout}
-                      className="relative px-6 py-2.5 text-black font-bold tracking-wider text-sm no-underline rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(0,240,255,0.7),0_0_60px_rgba(138,43,226,0.5)] hover:from-cyan-300 hover:to-purple-400"
-                    >
-                      <i className="fas fa-sign-out-alt mr-2"></i>Logout
-                    </button>
-                  </li>
-                ) : (
+                {!isLoggedIn && (
                   <>
                     <li>
-                      <Link
-                        href="/register"
+                      <Link 
+                        href="/register" 
                         className="relative ml-4 px-6 py-2.5 text-cyan-300 font-medium tracking-wider text-sm no-underline border border-cyan-500/50 rounded-full bg-gradient-to-r from-cyan-900/20 to-purple-900/20 transition-all duration-300 hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-purple-500/20 hover:scale-105 hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(0,240,255,0.5),inset_0_0_20px_rgba(0,240,255,0.1)]"
                       >
                         <i className="fas fa-user-plus mr-2"></i>Register
                       </Link>
                     </li>
                     <li>
-                      <Link
-                        href="/login"
+                      <Link 
+                        href="/login" 
                         className="relative px-6 py-2.5 text-black font-bold tracking-wider text-sm no-underline rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(0,240,255,0.7),0_0_60px_rgba(138,43,226,0.5)] hover:from-cyan-300 hover:to-purple-400"
                       >
                         <i className="fas fa-sign-in-alt mr-2"></i>Login
@@ -136,20 +107,11 @@ const Navbar: React.FC = () => {
                   Terminal
                 </Link>
               </li>
-              {isLoggedIn ? (
-                <li>
-                  <button
-                    onClick={handleLogout}
-                    className="block w-full text-left px-4 py-3 text-black font-bold uppercase tracking-wide text-sm no-underline transition-all duration-300 bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400 rounded-lg"
-                  >
-                    <i className="fas fa-sign-out-alt pr-3"></i>Logout
-                  </button>
-                </li>
-              ) : (
+              {!isLoggedIn && (
                 <>
                   <li>
-                    <Link
-                      href="/register"
+                    <Link 
+                      href="/register" 
                       className="block px-4 py-3 mt-3 text-cyan-300 font-medium uppercase tracking-wide text-sm no-underline transition-all duration-300 hover:bg-cyan-500/10 hover:pl-6 rounded-lg border border-cyan-500/30"
                       onClick={() => setIsOpen(false)}
                     >
@@ -157,8 +119,8 @@ const Navbar: React.FC = () => {
                     </Link>
                   </li>
                   <li>
-                    <Link
-                      href="/login"
+                    <Link 
+                      href="/login" 
                       className="block px-4 py-3 text-black font-bold uppercase tracking-wide text-sm no-underline transition-all duration-300 bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400 rounded-lg"
                       onClick={() => setIsOpen(false)}
                     >
