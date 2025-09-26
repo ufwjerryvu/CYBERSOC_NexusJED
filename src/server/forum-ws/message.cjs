@@ -69,6 +69,7 @@ io.on("connection", (socket) => {
       }
 
       const messageOut = {
+        id: saved.id,
         text: saved.text || "",
         images: images.length > 0 ? images : (saved.image ? [saved.image] : undefined),
         email: saved.email || email,
@@ -79,6 +80,60 @@ io.on("connection", (socket) => {
       io.emit("chat:message", messageOut);
     } catch (err) {
       console.error("[forum-ws] error handling chat:message", err);
+      socket.emit("chat:error", { message: "Server error" });
+    }
+  });
+
+  socket.on("message:deleted", (payload) => {
+    try {
+      const messageId = payload && payload.messageId;
+      if (!messageId) {
+        socket.emit("chat:error", { message: "Invalid message ID" });
+        return;
+      }
+      
+      // Broadcast the deletion to all connected clients
+      io.emit("message:deleted", { messageId });
+    } catch (err) {
+      console.error("[forum-ws] error handling message:deleted", err);
+      socket.emit("chat:error", { message: "Server error" });
+    }
+  });
+
+  socket.on("message:edited", (payload) => {
+    try {
+      const messageId = payload && payload.messageId;
+      const newText = payload && payload.newText;
+      const images = payload && payload.images;
+      
+      if (!messageId || typeof newText !== "string") {
+        socket.emit("chat:error", { message: "Invalid edit payload" });
+        return;
+      }
+      
+      // Broadcast the edit to all connected clients (including images if provided)
+      const editData = { messageId, newText, images };
+      io.emit("message:edited", editData);
+    } catch (err) {
+      console.error("[forum-ws] error handling message:edited", err);
+      socket.emit("chat:error", { message: "Server error" });
+    }
+  });
+
+  socket.on("message:image-removed", (payload) => {
+    try {
+      const messageId = payload && payload.messageId;
+      const imageIndex = payload && payload.imageIndex;
+      
+      if (!messageId || typeof imageIndex !== "number") {
+        socket.emit("chat:error", { message: "Invalid image removal payload" });
+        return;
+      }
+      
+      // Broadcast the image removal to all connected clients
+      io.emit("message:image-removed", { messageId, imageIndex });
+    } catch (err) {
+      console.error("[forum-ws] error handling message:image-removed", err);
       socket.emit("chat:error", { message: "Server error" });
     }
   });
