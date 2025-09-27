@@ -16,7 +16,7 @@ interface ChatMessage {
 
 export function useForum() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
 
   // User state derived from auth context
   const email = user?.email || null;
@@ -114,9 +114,28 @@ export function useForum() {
     }
   }, [hasMoreMessages, loadingMore, oldestTimestamp]);
 
+  // Get access token from cookies
+  const getAccessToken = (): string | null => {
+    if (typeof document === 'undefined') return null;
+    const cookies = document.cookie.split(';');
+    for (const cookie of cookies) {
+      const [name, value] = cookie.trim().split('=');
+      if (name === 'access_token') {
+        return value ? decodeURIComponent(value) : null;
+      }
+    }
+    return null;
+  };
+
   // Setup WebSocket connection
   useEffect(() => {
     if (loadingHistory || !user) return;
+
+    const accessToken = getAccessToken();
+    if (!accessToken) {
+      console.log("No access token available for WebSocket connection");
+      return;
+    }
 
     const rawEnvUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || process.env.WEBSOCKET_URL || "http://localhost:8000";
 
@@ -132,14 +151,12 @@ export function useForum() {
 
     const url = normalizeSocketUrl(rawEnvUrl);
     console.log("WebSocket URL:", url);
-    console.log("Connecting with auth:", { userId: user.id, email: user.email, username: user.username });
+    console.log("Connecting with JWT token");
 
     const s = io(url, {
       path: "/message",
       auth: {
-        userId: user.id,
-        email: user.email,
-        username: user.username
+        token: accessToken
       }
     });
     setSock(s);
@@ -185,6 +202,11 @@ export function useForum() {
 
     s.on("chat:error", (error) => {
       console.error("Chat error:", error);
+      // If it's an authentication error, try to refresh the user/token
+      if (error.message?.includes("Authentication") || error.message?.includes("required")) {
+        console.log("Authentication error detected, refreshing user data");
+        refreshUser();
+      }
     });
 
     s.on("chat:message", onChatMessage);
@@ -203,7 +225,7 @@ export function useForum() {
       s.off("message:image-removed", onImageRemoved);
       s.disconnect();
     };
-  }, [loadingHistory, user]);
+  }, [loadingHistory, user, refreshUser]);
 
   // Message handling functions
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

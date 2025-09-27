@@ -62,9 +62,10 @@ export async function POST(request: NextRequest) {
 
     const cookieOptions = {
       httpOnly: true,
-      secure: false, // Set to false for IP-based deployments
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax' as const,
       path: '/',
+      domain: process.env.COOKIE_DOMAIN || undefined, // Allow cross-subdomain if needed
     };
 
     response.cookies.set('access_token', accessToken, {

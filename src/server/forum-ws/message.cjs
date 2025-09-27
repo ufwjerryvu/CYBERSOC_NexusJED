@@ -20,18 +20,37 @@ prisma.user.findMany({ select: { id: true, email: true, username: true } })
     console.error("[forum-ws] Error querying users:", err);
   });
 
-// Simple JWT verification for WebSocket
-function verifySocketAuth(auth) {
-  // For now, we'll use the auth data sent from client
-  // In production, you'd want to verify JWT tokens here
-  if (!auth || !auth.userId || !auth.email || !auth.username) {
+// JWT verification for WebSocket
+const jwt = require("jsonwebtoken");
+
+function verifySocketAuth(socket) {
+  try {
+    // Try to get token from auth object
+    const token = socket.handshake.auth?.token;
+    if (!token) {
+      console.log("[forum-ws] No token provided in auth");
+      return null;
+    }
+
+    // Verify the access token
+    const JWT_SECRET = process.env.AUTH_SECRET || 'fallback-secret';
+    const payload = jwt.verify(token, JWT_SECRET);
+
+    if (!payload || !payload.userId || !payload.email || !payload.username) {
+      console.log("[forum-ws] Invalid token payload");
+      return null;
+    }
+
+    return {
+      userId: payload.userId,
+      email: payload.email,
+      username: payload.username,
+      isAdmin: payload.isAdmin || false
+    };
+  } catch (error) {
+    console.log("[forum-ws] Token verification failed:", error.message);
     return null;
   }
-  return {
-    userId: auth.userId,
-    email: auth.email,
-    username: auth.username
-  };
 }
 
 const server = http.createServer();
@@ -46,7 +65,7 @@ io.on("connection", (socket) => {
   console.log("[forum-ws] client connected", socket.id);
 
   // Verify authentication on connection
-  const auth = verifySocketAuth(socket.handshake.auth);
+  const auth = verifySocketAuth(socket);
   if (!auth) {
     console.log("[forum-ws] unauthorized connection attempt", socket.id);
     socket.emit("chat:error", { message: "Authentication required" });
