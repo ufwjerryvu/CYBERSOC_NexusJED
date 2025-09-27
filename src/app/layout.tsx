@@ -9,6 +9,9 @@ import { TRPCReactProvider } from "~/trpc/react";
 export const metadata: Metadata = {
   title: "NexusJED",
   description: "NexusCTF's extended forum and terminal platform",
+  icons: {
+    icon: "/icon.ico",
+  },
 };
 
 const lato = Lato({
