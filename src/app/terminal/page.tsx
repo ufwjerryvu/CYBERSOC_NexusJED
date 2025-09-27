@@ -55,8 +55,9 @@ const TerminalPage = () => {
             // WebSocket connection
             try {
                 const wsUrl = process.env.NODE_ENV === 'production'
-                    ? `ws://${window.location.hostname}:5050`
+                    ? `ws://${process.env.NEXT_PUBLIC_SERVER_HOST || window.location.hostname}:5050`
                     : "ws://localhost:5050";
+                console.log("Attempting WebSocket connection to:", wsUrl);
                 wsRef.current = new WebSocket(wsUrl);
 
                 wsRef.current.onopen = () => {
