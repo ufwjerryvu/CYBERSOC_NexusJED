@@ -68,20 +68,16 @@ export async function POST(request: NextRequest) {
 
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' && !isIPDeployment, // Disable secure for IP deployments
-      sameSite: 'lax' as const,
-      path: '/',
-      domain: process.env.COOKIE_DOMAIN || undefined,
-    };
-
-    response.cookies.set('access_token', accessToken, {
-      ...cookieOptions,
-      maxAge: 15 * 60, // 15 minutes
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60,
     });
 
     response.cookies.set('refresh_token', newRefreshToken, {
-      ...cookieOptions,
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60,
     });
 
     return response;

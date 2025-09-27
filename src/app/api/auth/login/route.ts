@@ -48,56 +48,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // For IP-based deployments, we need more permissive cookie settings
-    const isIPDeployment = process.env.NEXT_PUBLIC_SERVER_HOST &&
-      /^\d+\.\d+\.\d+\.\d+$/.test(process.env.NEXT_PUBLIC_SERVER_HOST);
+    response.cookies.set('access_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60,
+    });
 
     const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production' && !isIPDeployment, // Disable secure for IP deployments
-      sameSite: 'lax' as const,
-      path: '/',
-      domain: process.env.COOKIE_DOMAIN || undefined,
-    };
-
-    console.log('[AUTH] Setting cookies with options:', cookieOptions);
-    console.log('[AUTH] Is IP deployment:', isIPDeployment);
-    console.log('[AUTH] NODE_ENV:', process.env.NODE_ENV);
-
-    // Try setting cookies with different strategies for IP deployments
-    if (isIPDeployment) {
-      // More permissive settings for IP deployments
-      const ipCookieOptions = {
-        httpOnly: false, // Allow JS access for debugging
-        secure: false,
-        sameSite: 'none' as const,
-        path: '/',
-      };
-
-      console.log('[AUTH] Using IP-specific cookie options:', ipCookieOptions);
-
-      response.cookies.set('access_token', accessToken, {
-        ...ipCookieOptions,
-        maxAge: 15 * 60,
-      });
-
-      response.cookies.set('refresh_token', refreshToken, {
-        ...ipCookieOptions,
-        maxAge: 7 * 24 * 60 * 60,
-      });
-    } else {
-      response.cookies.set('access_token', accessToken, {
-        ...cookieOptions,
-        maxAge: 15 * 60, // 15 minutes
-      });
-
-      response.cookies.set('refresh_token', refreshToken, {
-        ...cookieOptions,
-        maxAge: 7 * 24 * 60 * 60, // 7 days
-      });
-    }
-
-    console.log('[AUTH] Cookies set successfully');
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60,
+    });
 
     return response;
   } catch (error) {
