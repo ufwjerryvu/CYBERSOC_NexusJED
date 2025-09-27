@@ -25,7 +25,7 @@ export default function ChatModals({
       >
         {previewIndex !== null && imagePreviews[previewIndex] && (
           <img
-            src={imagePreviews[previewIndex] as string}
+            src={imagePreviews[previewIndex]!}
             alt="preview-large"
             className="max-h-[85vh] max-w-[90vw] object-contain rounded-xl border border-white/10"
           />

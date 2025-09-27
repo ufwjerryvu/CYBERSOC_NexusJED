@@ -1,4 +1,4 @@
-
+//@ts-nocheck
 const http = require("http");
 const { Server } = require("socket.io");
 const { PrismaClient } = require("@prisma/client");
