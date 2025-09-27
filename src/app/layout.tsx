@@ -27,6 +27,7 @@ export default function RootLayout({
     <html lang="en" className={lato.className}>
       <body>
         <TRPCReactProvider>{children}</TRPCReactProvider>
+        {children}
       </body>
     </html>
   );
