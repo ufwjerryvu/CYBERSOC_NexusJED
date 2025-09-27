@@ -60,20 +60,21 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    response.cookies.set('access_token', accessToken, {
+    const cookieOptions = {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60, // 15 minutes
+      secure: false, // Set to false for IP-based deployments
+      sameSite: 'lax' as const,
       path: '/',
+    };
+
+    response.cookies.set('access_token', accessToken, {
+      ...cookieOptions,
+      maxAge: 15 * 60, // 15 minutes
     });
 
     response.cookies.set('refresh_token', newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      ...cookieOptions,
       maxAge: 7 * 24 * 60 * 60, // 7 days
-      path: '/',
     });
 
     return response;

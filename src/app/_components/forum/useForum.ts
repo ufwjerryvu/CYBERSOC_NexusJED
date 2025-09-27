@@ -118,7 +118,7 @@ export function useForum() {
   useEffect(() => {
     if (loadingHistory || !user) return;
 
-    const rawEnvUrl = process.env.WEBSOCKET_URL || "http://localhost:8000";
+    const rawEnvUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || process.env.WEBSOCKET_URL || "http://localhost:8000";
 
     const normalizeSocketUrl = (u: string) => {
       try {
