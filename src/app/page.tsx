@@ -94,7 +94,7 @@ export default function Home() {
 
           {/* CTA Button */}
           <Link
-            href="/register"
+            href="/terminal"
             className="inline-block px-10 py-4 text-white rounded-full font-semibold text-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
             style={{
               background: 'linear-gradient(135deg, #00f0ff, #8a2be2)',
@@ -103,7 +103,7 @@ export default function Home() {
             onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,240,255,0.5)'}
             onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,240,255,0.3)'}
           >
-            ENTER THE DISCUSSION
+            USE THE TERMINAL
           </Link>
         </div>
       </section>
