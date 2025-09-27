@@ -6,6 +6,7 @@ import { useEffect } from "react";
 import Link from "next/link";
 import LoadingScreen from "~/app/_components/loading/LoadingScreen";
 import Navbar from "../_components/global/Navbar";
+import { useAuth } from "~/contexts/AuthContext";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -13,23 +14,13 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
-  const [checking, setChecking] = useState(true);
+  const { user, loading, login } = useAuth();
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch("/api/auth/me");
-        if (res.ok) {
-          router.replace("/forum");
-          return;
-        }
-      } catch {
-        // User not authenticated
-      }
-      setChecking(false);
-    };
-    checkAuth();
-  }, [router]);
+    if (!loading && user) {
+      router.replace("/forum");
+    }
+  }, [user, loading, router]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -39,142 +30,112 @@ export default function LoginPage() {
     setError("");
 
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.toLowerCase(),
-          password
-        }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        if (res.status >= 500) {
-          setError("Server is down, please try again later.");
-        } else {
-          setError(data.error || "Invalid credentials, please try again.");
-        }
-        return;
-      }
-
+      await login(email.toLowerCase(), password);
       router.push("/forum");
     } catch (err) {
-      setError("Server is down, please try again later.");
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Login failed, please try again.");
+      }
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (checking) {
+  if (loading) {
+    return <LoadingScreen />;
+  }
+
+  if (user) {
     return <LoadingScreen />;
   }
 
   return (
     <>
     <Navbar/>
-    <main className="bg-black text-white font-sans min-h-screen overflow-x-hidden relative">
+    <main className="min-h-screen bg-gradient-to-b from-[#090b12] to-[#05060a] text-[#e6f6ff] overflow-x-hidden relative">
       {/* Animated Grid Background */}
-      <div
-        className="fixed inset-0 opacity-30 -z-10"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(0,240,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0,240,255,0.1) 1px, transparent 1px)",
-          backgroundSize: "50px 50px",
-          animation: "grid-move 20s linear infinite",
-        }}
-      />
-
-      <style jsx>{`
-        @keyframes grid-move {
-          0% { transform: translate(0, 0); }
-          100% { transform: translate(50px, 50px); }
-        }
-        @keyframes glow {
-          from { filter: drop-shadow(0 0 20px rgba(0,240,255,0.5)); }
-          to { filter: drop-shadow(0 0 30px rgba(138,43,226,0.8)); }
-        }
-      `}</style>
+      <div className="fixed inset-0 opacity-35 -z-10 bg-[linear-gradient(to_right,rgba(0,240,255,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,240,255,0.08)_1px,transparent_1px)] bg-[size:32px_32px] grid-background" />
 
       <section className="min-h-screen flex items-center justify-center relative">
         <div className="relative z-10 p-8 w-full max-w-md">
-          <h1
-            className="text-5xl font-black mb-6 text-center"
-            style={{
-              lineHeight: 1,
-              background:
-                "linear-gradient(135deg, #00f0ff 0%, #8a2be2 50%, #ff00ff 100%)",
-              WebkitBackgroundClip: "text",
-              backgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              animation: "glow 2s ease-in-out infinite alternate",
-            }}
-          >
-            LOGIN
-          </h1>
+          <div className="text-center mb-8">
+            <h1 className="text-5xl font-[900] bg-gradient-to-r from-[#00f0ff] via-[#8a2be2] to-[#ff00ff] bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(0,240,255,0.5)] inline-block">
+              Login
+            </h1>
+            <div className="text-sm text-[#a0b3c5] mt-2 font-mono">~/auth/login</div>
+          </div>
 
-          <form
-            method="post"
-            onSubmit={handleSubmit}
-            className="p-6 rounded-2xl backdrop-blur-sm"
-            style={{
-              background: "rgba(0,240,255,0.03)",
-              border: "1px solid rgba(0,240,255,0.15)",
-            }}
-          >
-            <div className="mb-4">
-              <label htmlFor="email" className="block mb-1 text-slate-300">
-                Email
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 bg-black text-white rounded"
-                style={{ border: "1px solid rgba(0,240,255,0.15)" }}
-              />
+          <div className="rounded-2xl border border-[rgba(0,240,255,0.25)] bg-[#0c0f17] shadow-[inset_0_0_32px_rgba(0,240,255,0.05)] p-6">
+            <div className="flex gap-1.5 mb-4 pb-2 border-b border-[rgba(0,240,255,0.15)]">
+              <div className="w-3 h-3 rounded-full bg-[#ff5f56]" />
+              <div className="w-3 h-3 rounded-full bg-[#ffbd2e]" />
+              <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
+              <span className="ml-4 text-sm text-[#a0b3c5] font-mono">authentication required</span>
             </div>
-            <div className="mb-6">
-              <label htmlFor="password" className="block mb-1 text-slate-300">
-                Password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 bg-black text-white rounded"
-                style={{ border: "1px solid rgba(0,240,255,0.15)" }}
-              />
-            </div>
-            {error && (
-              <div className="mb-4 p-3 rounded bg-red-900/20 border border-red-500/30 text-red-400 text-sm">
-                {error}
+
+            <form method="post" onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label htmlFor="email" className="block mb-2 text-[#a0b3c5] text-sm font-mono">
+                  email:
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6b7785] font-mono">$</span>
+                  <input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full bg-[rgba(0,0,0,0.7)] text-[#e6f6ff] rounded border border-[rgba(0,240,255,0.2)] pl-8 pr-4 py-3 outline-none font-mono text-sm focus:border-[rgba(0,240,255,0.5)] transition-colors"
+                    placeholder="user@example.com"
+                  />
+                </div>
               </div>
-            )}
-            <button
-              type="submit"
-              disabled={submitting}
-              className="w-full px-6 py-3 rounded-full font-semibold mb-4"
-              style={{
-                background: "linear-gradient(135deg, #00f0ff, #8a2be2)",
-                boxShadow: "0 4px 20px rgba(0,240,255,0.3)",
-              }}
-            >
-              {submitting ? "Signing In..." : "Sign In"}
-            </button>
-            <div className="text-center">
-              <span className="text-slate-400">Don&apos;t have an account? </span>
-              <Link href="/register" className="text-cyan-400 hover:text-cyan-300 font-semibold">
-                Register here
-              </Link>
-            </div>
-          </form>
+
+              <div>
+                <label htmlFor="password" className="block mb-2 text-[#a0b3c5] text-sm font-mono">
+                  password:
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6b7785] font-mono">$</span>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full bg-[rgba(0,0,0,0.7)] text-[#e6f6ff] rounded border border-[rgba(0,240,255,0.2)] pl-8 pr-4 py-3 outline-none font-mono text-sm focus:border-[rgba(0,240,255,0.5)] transition-colors"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
+              {error && (
+                <div className="p-3 rounded bg-[rgba(255,95,86,0.1)] border border-[rgba(255,95,86,0.3)] text-[#ff5f56] text-sm font-mono">
+                  <span className="text-[#ff5f56]">error:</span> {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full px-6 py-3 rounded bg-[rgba(0,240,255,0.2)] border border-[rgba(0,240,255,0.3)] text-[#00f0ff] font-mono text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[rgba(0,240,255,0.3)] hover:border-[rgba(0,240,255,0.5)]"
+              >
+                {submitting ? "authenticating..." : "login"}
+              </button>
+
+              <div className="text-center text-sm font-mono">
+                <span className="text-[#6b7785]"># new user? </span>
+                <Link href="/register" className="text-[#00f0ff] hover:text-[#8a2be2] transition-colors">
+                  register
+                </Link>
+              </div>
+            </form>
+          </div>
         </div>
       </section>
     </main>

@@ -17,43 +17,44 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-[1030] bg-gradient-to-b from-black/95 to-black/85 backdrop-blur-xl border-b border-cyan-500/30 shadow-[0_0_30px_rgba(0,240,255,0.3),0_0_60px_rgba(138,43,226,0.2)]">
+      <nav className="fixed top-0 left-0 right-0 z-[1030] bg-black/85 border-b border-white/20 backdrop-blur-md shadow-[0_0_15px_rgba(0,240,255,0.6),0_0_30px_rgba(138,43,226,0.4)]">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Brand and Main Nav */}
+            {/* Brand */}
             <div className="flex items-center space-x-6">
-              <Link 
-                href="/" 
-                className="text-[1.6rem] font-[900] bg-gradient-to-r from-cyan-300 via-purple-500 to-pink-500 bg-clip-text text-transparent no-underline hover:scale-110 transition-all duration-300 bg-[length:400%_400%] animate-gradient hover:drop-shadow-[0_0_25px_rgba(0,240,255,0.8)]"
+              <Link
+                href="/"
+                className="text-[1.6rem] font-[900] bg-gradient-to-r from-[#0ff] via-[#8a2be2] to-[#ff2a6d] bg-clip-text text-transparent bg-[length:400%_400%] animate-[gradientShift_6s_ease_infinite] drop-shadow-[0_0_15px_rgba(0,240,255,0.7)] hover:scale-105 hover:drop-shadow-[0_0_25px_rgba(0,240,255,0.9)] transition-all duration-300 no-underline"
               >
                 NexusJED
               </Link>
-              
-              {/* Desktop Navigation - Forum and Terminal */}
+
+              {/* Desktop Navigation */}
               <div className="hidden md:flex items-center">
-                <ul className="flex items-center space-x-2 list-none m-0 p-0">
+                <ul className="flex items-center space-x-1 list-none m-0 p-0">
                   <li>
-                    <Link 
-                      href="/forum" 
-                      className="relative block px-2 py-2.5 text-gray-300 font-medium tracking-wider text-sm no-underline transition-all duration-300 hover:text-cyan-300 hover:scale-105 hover:translate-y-[-2px] after:content-[''] after:absolute after:left-[10%] after:bottom-0 after:w-[80%] after:h-[2px] after:bg-gradient-to-r after:from-transparent after:via-cyan-400 after:to-transparent after:scale-x-0 after:transition-transform after:duration-500 hover:after:scale-x-100 hover:drop-shadow-[0_0_15px_rgba(0,240,255,0.6)]"
+                    <Link
+                      href="/forum"
+                      className="relative inline-block px-3 py-2 text-[#bbb] font-medium text-sm no-underline transition-all duration-300 hover:text-[#0ff] hover:scale-105 hover:[text-shadow:0_0_8px_#0ff,0_0_20px_#8a2be2] after:content-[''] after:absolute after:left-0 after:bottom-[2px] after:w-0 after:h-[2px] after:bg-gradient-to-r after:from-[#0ff] after:to-[#8a2be2] after:transition-[width] after:duration-[0.4s] after:ease hover:after:w-full"
                     >
-                      Forum
+                      <i className="fas fa-comments mr-2"></i>Forum
                     </Link>
                   </li>
                   <li>
-                    <Link 
-                      href="/terminal" 
-                      className="relative block px-2 py-2.5 text-gray-300 font-medium tracking-wider text-sm no-underline transition-all duration-300 hover:text-cyan-300 hover:scale-105 hover:translate-y-[-2px] after:content-[''] after:absolute after:left-[10%] after:bottom-0 after:w-[80%] after:h-[2px] after:bg-gradient-to-r after:from-transparent after:via-cyan-400 after:to-transparent after:scale-x-0 after:transition-transform after:duration-500 hover:after:scale-x-100 hover:drop-shadow-[0_0_15px_rgba(0,240,255,0.6)]"
+                    <Link
+                      href="/terminal"
+                      className="relative inline-block px-3 py-2 text-[#bbb] font-medium text-sm no-underline transition-all duration-300 hover:text-[#0ff] hover:scale-105 hover:[text-shadow:0_0_8px_#0ff,0_0_20px_#8a2be2] after:content-[''] after:absolute after:left-0 after:bottom-[2px] after:w-0 after:h-[2px] after:bg-gradient-to-r after:from-[#0ff] after:to-[#8a2be2] after:transition-[width] after:duration-[0.4s] after:ease hover:after:w-full"
                     >
-                      Terminal
+                      <i className="fas fa-terminal mr-2"></i>Terminal
                     </Link>
                   </li>
                   <li>
-                    <Link 
-                      href="https://nexusctf.usydcyber.com/challenges" 
-                      className="relative block px-2 py-2.5 text-gray-300 font-medium tracking-wider text-sm no-underline transition-all duration-300 hover:text-cyan-300 hover:scale-105 hover:translate-y-[-2px] after:content-[''] after:absolute after:left-[10%] after:bottom-0 after:w-[80%] after:h-[2px] after:bg-gradient-to-r after:from-transparent after:via-cyan-400 after:to-transparent after:scale-x-0 after:transition-transform after:duration-500 hover:after:scale-x-100 hover:drop-shadow-[0_0_15px_rgba(0,240,255,0.6)]"
+                    <Link
+                      href="https://nexusctf.usydcyber.com/challenges"
+                      className="relative inline-block px-3 py-2 text-[#bbb] font-medium text-sm no-underline transition-all duration-300 hover:text-[#0ff] hover:scale-105 hover:[text-shadow:0_0_8px_#0ff,0_0_20px_#8a2be2] after:content-[''] after:absolute after:left-0 after:bottom-[2px] after:w-0 after:h-[2px] after:bg-gradient-to-r after:from-[#0ff] after:to-[#8a2be2] after:transition-[width] after:duration-[0.4s] after:ease hover:after:w-full"
+                      target="_blank"
                     >
-                      Challenges
+                      <i className="fas fa-flag mr-2"></i>Challenges
                     </Link>
                   </li>
                 </ul>
@@ -63,13 +64,13 @@ const Navbar: React.FC = () => {
             {/* Mobile menu button */}
             <button
               onClick={toggleMenu}
-              className="md:hidden flex flex-col gap-1.5 p-2 bg-transparent border border-cyan-500/30 rounded-lg hover:bg-cyan-500/10 transition-all duration-300"
+              className="md:hidden flex flex-col gap-1 p-1.5 bg-transparent border-none"
               aria-expanded={isOpen}
               aria-label="Toggle navigation"
             >
-              <span className={`block w-6 h-[2px] bg-gradient-to-r from-cyan-400 to-purple-500 shadow-[0_0_10px_#00ffff] transition-all duration-300 ${isOpen ? 'rotate-45 translate-y-[8px]' : ''}`} />
-              <span className={`block w-6 h-[2px] bg-gradient-to-r from-cyan-400 to-purple-500 shadow-[0_0_10px_#00ffff] transition-all duration-300 ${isOpen ? 'opacity-0 scale-0' : ''}`} />
-              <span className={`block w-6 h-[2px] bg-gradient-to-r from-cyan-400 to-purple-500 shadow-[0_0_10px_#00ffff] transition-all duration-300 ${isOpen ? '-rotate-45 -translate-y-[8px]' : ''}`} />
+              <span className={`w-6 h-[3px] bg-[#0ff] shadow-[0_0_8px_#0ff] transition-all duration-300 ${isOpen ? 'rotate-45 translate-y-[8px]' : ''}`}></span>
+              <span className={`w-6 h-[3px] bg-[#0ff] shadow-[0_0_8px_#0ff] transition-all duration-300 ${isOpen ? 'opacity-0' : ''}`}></span>
+              <span className={`w-6 h-[3px] bg-[#0ff] shadow-[0_0_8px_#0ff] transition-all duration-300 ${isOpen ? '-rotate-45 -translate-y-[8px]' : ''}`}></span>
             </button>
 
             {/* Desktop Auth Buttons */}
@@ -80,7 +81,7 @@ const Navbar: React.FC = () => {
                     <li>
                       <Link
                         href="/register"
-                        className="relative ml-4 px-6 py-2.5 text-cyan-300 font-medium tracking-wider text-sm no-underline border border-cyan-500/50 rounded-full bg-gradient-to-r from-cyan-900/20 to-purple-900/20 transition-all duration-300 hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-purple-500/20 hover:scale-105 hover:border-cyan-400 hover:shadow-[0_0_20px_rgba(0,240,255,0.5),inset_0_0_20px_rgba(0,240,255,0.1)]"
+                        className="relative inline-block px-4 py-2 ml-2 text-[#bbb] font-medium text-sm no-underline border border-[rgba(0,240,255,0.5)] rounded-full bg-[rgba(0,240,255,0.1)] transition-all duration-300 hover:text-[#0ff] hover:bg-[rgba(0,240,255,0.2)] hover:border-[#0ff] hover:shadow-[0_0_20px_rgba(0,240,255,0.5)] hover:scale-105"
                       >
                         <i className="fas fa-user-plus mr-2"></i>Register
                       </Link>
@@ -88,7 +89,7 @@ const Navbar: React.FC = () => {
                     <li>
                       <Link
                         href="/login"
-                        className="relative px-6 py-2.5 text-black font-bold tracking-wider text-sm no-underline rounded-full bg-gradient-to-r from-cyan-400 to-purple-500 transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(0,240,255,0.7),0_0_60px_rgba(138,43,226,0.5)] hover:from-cyan-300 hover:to-purple-400"
+                        className="relative inline-block px-4 py-2 text-black font-bold text-sm no-underline border border-[#8a2be2] rounded-full bg-gradient-to-r from-[#0ff] to-[#8a2be2] transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(0,240,255,0.7),0_0_60px_rgba(138,43,226,0.5)]"
                       >
                         <i className="fas fa-sign-in-alt mr-2"></i>Login
                       </Link>
@@ -97,11 +98,11 @@ const Navbar: React.FC = () => {
                 ) : (
                   <>
                     <li className="flex items-center space-x-3 px-4 py-2">
-                      <span className="text-cyan-300 font-medium">
+                      <span className="text-[#0ff] font-medium">
                         <i className="fas fa-user mr-2"></i>{user.username}
                       </span>
                       {user.isAdmin && (
-                        <span className="px-2 py-1 text-xs font-bold text-purple-300 bg-purple-500/20 border border-purple-500/30 rounded-full">
+                        <span className="px-2 py-1 text-xs font-bold text-[#8a2be2] bg-[rgba(138,43,226,0.2)] border border-[rgba(138,43,226,0.5)] rounded-full">
                           ADMIN
                         </span>
                       )}
@@ -109,7 +110,7 @@ const Navbar: React.FC = () => {
                     <li>
                       <button
                         onClick={handleLogout}
-                        className="relative px-6 py-2.5 text-red-300 font-medium tracking-wider text-sm border border-red-500/50 rounded-full bg-gradient-to-r from-red-900/20 to-red-900/20 transition-all duration-300 hover:bg-gradient-to-r hover:from-red-500/20 hover:to-red-500/20 hover:scale-105 hover:border-red-400 hover:shadow-[0_0_20px_rgba(255,0,0,0.5)]"
+                        className="relative inline-block px-4 py-2 text-[#ff2a6d] font-medium text-sm border border-[rgba(255,42,109,0.5)] rounded-full bg-[rgba(255,42,109,0.1)] transition-all duration-300 hover:bg-[rgba(255,42,109,0.2)] hover:border-[#ff2a6d] hover:shadow-[0_0_20px_rgba(255,42,109,0.5)] hover:scale-105"
                       >
                         <i className="fas fa-sign-out-alt mr-2"></i>Logout
                       </button>
@@ -121,25 +122,35 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* Mobile Navigation */}
-          <div className={`${isOpen ? 'block opacity-100' : 'hidden opacity-0'} md:hidden pb-4 transition-all duration-300`}>
-            <hr className="border-cyan-500/30 my-3 shadow-[0_0_10px_rgba(0,240,255,0.3)]" />
+          <div className={`${isOpen ? 'block' : 'hidden'} md:hidden pb-4`}>
+            <hr className="border-white/20 my-3" />
             <ul className="list-none p-0 m-0 space-y-1">
               <li>
-                <Link 
-                  href="/forum" 
-                  className="block px-4 py-3 text-gray-300 font-medium uppercase tracking-wide text-sm no-underline transition-all duration-300 hover:text-cyan-300 hover:bg-cyan-500/10 hover:pl-6 rounded-lg"
+                <Link
+                  href="/forum"
+                  className="block px-4 py-3 mx-1 text-[#bbb] font-medium text-sm no-underline rounded-lg transition-all duration-300 hover:text-[#0ff] hover:bg-[rgba(0,240,255,0.1)] hover:pl-6"
                   onClick={() => setIsOpen(false)}
                 >
-                  Forum
+                  <i className="fas fa-comments mr-2"></i>Forum
                 </Link>
               </li>
               <li>
-                <Link 
-                  href="/terminal" 
-                  className="block px-4 py-3 text-gray-300 font-medium uppercase tracking-wide text-sm no-underline transition-all duration-300 hover:text-cyan-300 hover:bg-cyan-500/10 hover:pl-6 rounded-lg"
+                <Link
+                  href="/terminal"
+                  className="block px-4 py-3 mx-1 text-[#bbb] font-medium text-sm no-underline rounded-lg transition-all duration-300 hover:text-[#0ff] hover:bg-[rgba(0,240,255,0.1)] hover:pl-6"
                   onClick={() => setIsOpen(false)}
                 >
-                  Terminal
+                  <i className="fas fa-terminal mr-2"></i>Terminal
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="https://nexusctf.usydcyber.com/challenges"
+                  className="block px-4 py-3 mx-1 text-[#bbb] font-medium text-sm no-underline rounded-lg transition-all duration-300 hover:text-[#0ff] hover:bg-[rgba(0,240,255,0.1)] hover:pl-6"
+                  onClick={() => setIsOpen(false)}
+                  target="_blank"
+                >
+                  <i className="fas fa-flag mr-2"></i>Challenges
                 </Link>
               </li>
               {!user ? (
@@ -147,28 +158,28 @@ const Navbar: React.FC = () => {
                   <li>
                     <Link
                       href="/register"
-                      className="block px-4 py-3 mt-3 text-cyan-300 font-medium uppercase tracking-wide text-sm no-underline transition-all duration-300 hover:bg-cyan-500/10 hover:pl-6 rounded-lg border border-cyan-500/30"
+                      className="block px-4 py-3 mx-1 mt-3 text-[#0ff] font-medium text-sm no-underline border border-[rgba(0,240,255,0.5)] rounded-lg bg-[rgba(0,240,255,0.1)] transition-all duration-300 hover:bg-[rgba(0,240,255,0.2)] hover:pl-6"
                       onClick={() => setIsOpen(false)}
                     >
-                      <i className="fas fa-user-plus pr-3"></i>Register
+                      <i className="fas fa-user-plus mr-2"></i>Register
                     </Link>
                   </li>
                   <li>
                     <Link
                       href="/login"
-                      className="block px-4 py-3 text-black font-bold uppercase tracking-wide text-sm no-underline transition-all duration-300 bg-gradient-to-r from-cyan-400 to-purple-500 hover:from-cyan-300 hover:to-purple-400 rounded-lg"
+                      className="block px-4 py-3 mx-1 text-black font-bold text-sm no-underline rounded-lg bg-gradient-to-r from-[#0ff] to-[#8a2be2] transition-all duration-300"
                       onClick={() => setIsOpen(false)}
                     >
-                      <i className="fas fa-sign-in-alt pr-3"></i>Login
+                      <i className="fas fa-sign-in-alt mr-2"></i>Login
                     </Link>
                   </li>
                 </>
               ) : (
                 <>
-                  <li className="px-4 py-3 mt-3 text-cyan-300 font-medium text-sm border border-cyan-500/30 rounded-lg">
-                    <i className="fas fa-user pr-3"></i>{user.username}
+                  <li className="px-4 py-3 mx-1 mt-3 text-[#0ff] font-medium text-sm border border-white/20 rounded-lg">
+                    <i className="fas fa-user mr-2"></i>{user.username}
                     {user.isAdmin && (
-                      <span className="ml-2 px-2 py-1 text-xs font-bold text-purple-300 bg-purple-500/20 border border-purple-500/30 rounded-full">
+                      <span className="ml-2 px-2 py-1 text-xs font-bold text-[#8a2be2] bg-[rgba(138,43,226,0.2)] border border-[rgba(138,43,226,0.5)] rounded-full">
                         ADMIN
                       </span>
                     )}
@@ -176,9 +187,9 @@ const Navbar: React.FC = () => {
                   <li>
                     <button
                       onClick={handleLogout}
-                      className="block w-full text-left px-4 py-3 text-red-300 font-medium uppercase tracking-wide text-sm transition-all duration-300 hover:bg-red-500/10 hover:pl-6 rounded-lg border border-red-500/30"
+                      className="block w-full text-left px-4 py-3 mx-1 text-[#ff2a6d] font-medium text-sm border border-[rgba(255,42,109,0.5)] rounded-lg bg-[rgba(255,42,109,0.1)] transition-all duration-300 hover:bg-[rgba(255,42,109,0.2)] hover:pl-6"
                     >
-                      <i className="fas fa-sign-out-alt pr-3"></i>Logout
+                      <i className="fas fa-sign-out-alt mr-2"></i>Logout
                     </button>
                   </li>
                 </>
@@ -189,13 +200,10 @@ const Navbar: React.FC = () => {
       </nav>
 
       <style jsx>{`
-        @keyframes gradient {
+        @keyframes gradientShift {
           0% { background-position: 0% 50%; }
           50% { background-position: 100% 50%; }
           100% { background-position: 0% 50%; }
-        }
-        .animate-gradient {
-          animation: gradient 6s ease infinite;
         }
       `}</style>
     </>

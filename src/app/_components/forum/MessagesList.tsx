@@ -97,27 +97,34 @@ export default function MessagesList({
   return (
     <div
       ref={messagesContainerRef}
-      className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 pt-4 nice-scrollbar"
+      className="flex-1 min-h-0 overflow-y-auto px-4 md:px-6 pt-4 nice-scrollbar bg-[#0c0f17]"
+      style={{
+        scrollbarWidth: 'thin',
+        scrollbarColor: 'rgba(0, 240, 255, 0.3) transparent'
+      }}
     >
       {/* Loading more indicator */}
       {loadingMore && (
-        <div className="text-center text-slate-400 py-4 text-sm">
+        <div className="text-center text-[#a0b3c5] py-4 text-sm font-mono">
           <div className="inline-flex items-center gap-2">
-            <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-4 h-4 border-2 border-[#00f0ff] border-t-transparent rounded-full animate-spin"></div>
             Loading more messages...
           </div>
         </div>
       )}
-      
+
       {/* No more messages indicator */}
       {!hasMoreMessages && messages.length > 0 && (
-        <div className="text-center text-slate-500 py-2 text-xs">
-          No more messages
+        <div className="text-center text-[#6b7785] py-2 text-xs font-mono">
+          --- End of history ---
         </div>
       )}
-      
+
       {messages.length === 0 && (
-        <div className="text-center text-slate-400 py-8">No messages yet. Be the first to say hi.</div>
+        <div className="text-center text-[#a0b3c5] py-8 font-mono">
+          <div className="text-[#00f0ff]">$</div>
+          <div className="mt-2">No messages yet. Be the first to say hi!</div>
+        </div>
       )}
 
       {messages.map((m, idx) => (
