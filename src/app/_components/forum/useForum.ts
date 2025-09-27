@@ -117,13 +117,21 @@ export function useForum() {
   // Get access token from cookies
   const getAccessToken = (): string | null => {
     if (typeof document === 'undefined') return null;
+
+    console.log("All cookies:", document.cookie);
     const cookies = document.cookie.split(';');
+
     for (const cookie of cookies) {
       const [name, value] = cookie.trim().split('=');
+      console.log("Cookie found:", { name, value: value?.substring(0, 20) + '...' });
       if (name === 'access_token') {
-        return value ? decodeURIComponent(value) : null;
+        const token = value ? decodeURIComponent(value) : null;
+        console.log("Access token found:", token ? "Yes" : "No");
+        return token;
       }
     }
+
+    console.log("No access_token cookie found");
     return null;
   };
 
@@ -131,9 +139,34 @@ export function useForum() {
   useEffect(() => {
     if (loadingHistory || !user) return;
 
-    const accessToken = getAccessToken();
+    let accessToken = getAccessToken();
+
+    // If no token from cookies, try to get a fresh one by calling the auth API
     if (!accessToken) {
-      console.log("No access token available for WebSocket connection");
+      console.log("No access token in cookies, attempting to fetch from /api/auth/me");
+      fetch('/api/auth/me', {
+        credentials: 'include',
+        cache: 'no-store'
+      })
+      .then(async (res) => {
+        if (res.ok) {
+          console.log("Successfully authenticated with server, retrying token retrieval");
+          // Wait a bit for cookies to be set
+          setTimeout(() => {
+            const newToken = getAccessToken();
+            if (newToken) {
+              console.log("Token found after refresh, attempting WebSocket connection");
+              // Reconnect with new token - this will trigger the useEffect again
+              refreshUser();
+            }
+          }, 100);
+        } else {
+          console.log("Failed to authenticate with server:", res.status);
+        }
+      })
+      .catch(err => {
+        console.error("Error checking auth status:", err);
+      });
       return;
     }
 
