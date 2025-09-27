@@ -5,9 +5,11 @@ import MessagesList from "~/app/_components/forum/MessagesList";
 import MessageComposer from "~/app/_components/forum/MessageComposer";
 import ChatModals from "~/app/_components/forum/ChatModals";
 import { useForum } from "~/app/_components/forum/useForum";
+import { useAuth } from "~/contexts/AuthContext";
 import Navbar from "../_components/global/Navbar";
 
 export default function ForumPage() {
+    const { user, loading } = useAuth();
     const {
         // State
         checking,
@@ -28,7 +30,7 @@ export default function ForumPage() {
         modalImage,
         shouldAutoScroll,
         sock,
-        
+
         // Actions
         setMessage,
         setEditingText,
@@ -46,7 +48,11 @@ export default function ForumPage() {
         handleScrollChange,
     } = useForum();
 
-    if (checking || loadingHistory) {
+    if (loading || checking || loadingHistory) {
+        return <LoadingScreen />;
+    }
+
+    if (!user) {
         return <LoadingScreen />;
     }
 
@@ -58,8 +64,8 @@ export default function ForumPage() {
                     <div className="bg-gray-800 px-4 py-3 border-b border-gray-700">
                         <h1 className="text-xl font-bold">Forum Chat</h1>
                         <div className="text-sm text-gray-300">
-                            Welcome, <span className="text-blue-400">{email}</span>
-                            {isCurrentUserAdmin && <span className="text-red-400 ml-2">(Admin)</span>}
+                            Welcome, <span className="text-blue-400">{user.username}</span>
+                            {user.isAdmin && <span className="text-red-400 ml-2">(Admin)</span>}
                         </div>
                     </div>
 

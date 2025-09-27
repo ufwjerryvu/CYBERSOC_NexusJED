@@ -92,19 +92,33 @@ export default function Home() {
             45+ challenges • In-browser Linux terminal • Community forum • Elite cyber competition
           </p>
 
-          {/* CTA Button */}
-          <Link
-            href="/terminal"
-            className="inline-block px-10 py-4 text-white rounded-full font-semibold text-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
-            style={{
-              background: 'linear-gradient(135deg, #00f0ff, #8a2be2)',
-              boxShadow: '0 4px 20px rgba(0,240,255,0.3)'
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,240,255,0.5)'}
-            onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,240,255,0.3)'}
-          >
-            USE THE TERMINAL
-          </Link>
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+            <Link
+              href="/terminal"
+              className="inline-block px-10 py-4 text-white rounded-full font-semibold text-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden"
+              style={{
+                background: 'linear-gradient(135deg, #00f0ff, #8a2be2)',
+                boxShadow: '0 4px 20px rgba(0,240,255,0.3)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,240,255,0.5)'}
+              onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,240,255,0.3)'}
+            >
+              USE THE TERMINAL
+            </Link>
+            <Link
+              href="/forum"
+              className="inline-block px-10 py-4 text-white rounded-full font-semibold text-lg transition-all duration-300 hover:-translate-y-1 relative overflow-hidden border border-cyan-400/50"
+              style={{
+                background: 'rgba(0,240,255,0.1)',
+                boxShadow: '0 4px 20px rgba(0,240,255,0.2)'
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,240,255,0.4)'}
+              onMouseLeave={(e) => e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,240,255,0.2)'}
+            >
+              JOIN THE FORUM
+            </Link>
+          </div>
         </div>
       </section>
 

@@ -7,9 +7,11 @@ import Link from "next/link";
 import LoadingScreen from "~/app/_components/loading/LoadingScreen";
 import Navbar from "../_components/global/Navbar";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -38,12 +40,25 @@ export default function LoginPage() {
     setSubmitting(true);
     setError("");
 
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setSubmitting(false);
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      setSubmitting(false);
+      return;
+    }
+
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           email: email.toLowerCase(),
+          username: username.toLowerCase(),
           password
         }),
       });
@@ -53,7 +68,7 @@ export default function LoginPage() {
         if (res.status >= 500) {
           setError("Server is down, please try again later.");
         } else {
-          setError(data.error || "Invalid credentials, please try again.");
+          setError(data.error || "Registration failed, please try again.");
         }
         return;
       }
@@ -110,7 +125,7 @@ export default function LoginPage() {
               animation: "glow 2s ease-in-out infinite alternate",
             }}
           >
-            LOGIN
+            REGISTER
           </h1>
 
           <form
@@ -137,7 +152,22 @@ export default function LoginPage() {
                 style={{ border: "1px solid rgba(0,240,255,0.15)" }}
               />
             </div>
-            <div className="mb-6">
+            <div className="mb-4">
+              <label htmlFor="username" className="block mb-1 text-slate-300">
+                Username
+              </label>
+              <input
+                id="username"
+                name="username"
+                type="text"
+                required
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full px-3 py-2 bg-black text-white rounded"
+                style={{ border: "1px solid rgba(0,240,255,0.15)" }}
+              />
+            </div>
+            <div className="mb-4">
               <label htmlFor="password" className="block mb-1 text-slate-300">
                 Password
               </label>
@@ -148,6 +178,21 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-3 py-2 bg-black text-white rounded"
+                style={{ border: "1px solid rgba(0,240,255,0.15)" }}
+              />
+            </div>
+            <div className="mb-6">
+              <label htmlFor="confirmPassword" className="block mb-1 text-slate-300">
+                Confirm Password
+              </label>
+              <input
+                id="confirmPassword"
+                name="confirmPassword"
+                type="password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 className="w-full px-3 py-2 bg-black text-white rounded"
                 style={{ border: "1px solid rgba(0,240,255,0.15)" }}
               />
@@ -166,12 +211,12 @@ export default function LoginPage() {
                 boxShadow: "0 4px 20px rgba(0,240,255,0.3)",
               }}
             >
-              {submitting ? "Signing In..." : "Sign In"}
+              {submitting ? "Creating Account..." : "Create Account"}
             </button>
             <div className="text-center">
-              <span className="text-slate-400">Don&apos;t have an account? </span>
-              <Link href="/register" className="text-cyan-400 hover:text-cyan-300 font-semibold">
-                Register here
+              <span className="text-slate-400">Already have an account? </span>
+              <Link href="/login" className="text-cyan-400 hover:text-cyan-300 font-semibold">
+                Login here
               </Link>
             </div>
           </form>
