@@ -45,14 +45,13 @@ export default function MessageComposer({
       {/* Image Previews */}
       {imagePreviews.length > 0 && (
         <div className="px-4 md:px-6 pt-4">
-          <div className="text-xs text-[#6b7785] font-mono mb-2"># attached images:</div>
           <div className="flex gap-3 flex-wrap">
             {imagePreviews.map((src, idx) => (
-              <div key={idx} className="relative bg-[rgba(0,0,0,0.7)] rounded border border-[rgba(0,240,255,0.2)] p-2">
+              <div key={idx} className="relative bg-black/60 rounded-xl border border-white/10 p-2">
                 <img
                   src={src}
                   alt={`selected-${idx}`}
-                  className="h-16 w-16 object-cover rounded cursor-pointer"
+                  className="h-16 w-16 object-cover rounded-lg cursor-pointer"
                   onClick={() => onImagePreview(idx)}
                 />
                 <button
@@ -60,9 +59,13 @@ export default function MessageComposer({
                   aria-label="Remove image"
                   title="Remove image"
                   onClick={() => onImageRemove(idx)}
-                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full flex items-center justify-center text-white text-xs bg-[#ff5f56] hover:bg-[#ff3b30] transition-colors"
+                  className="absolute -top-2 -right-2 h-6 w-6 rounded-full flex items-center justify-center text-white text-xs"
+                  style={{
+                    background: 'linear-gradient(135deg, #8a2be2, #ff00ff)',
+                    boxShadow: '0 4px 20px rgba(255,0,255,0.25)'
+                  }}
                 >
-                  ×
+                  ✕
                 </button>
               </div>
             ))}
@@ -71,7 +74,7 @@ export default function MessageComposer({
       )}
 
       {/* Composer Form */}
-      <form onSubmit={onSubmit} className="p-4 md:p-6 border-t border-[rgba(0,240,255,0.15)]">
+      <form onSubmit={onSubmit} className="p-4 md:p-6 border-t border-cyan-400/10">
         <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
           {/* Hidden file input */}
           <input
@@ -88,28 +91,41 @@ export default function MessageComposer({
             type="button"
             onClick={() => fileInputRef.current?.click()}
             title="Attach image"
-            className="px-4 py-3 rounded border border-[rgba(0,240,255,0.2)] bg-[rgba(0,0,0,0.7)] text-[#00f0ff] font-mono text-sm transition-all hover:border-[rgba(0,240,255,0.4)] hover:bg-[rgba(0,240,255,0.05)]"
+            className="px-4 py-3 rounded-xl font-semibold transition-all"
+            style={{
+              background: 'linear-gradient(135deg, #111, #1b1b2b)',
+              border: '1px solid rgba(0,240,255,0.15)'
+            }}
           >
-            attach
+            <div className="flex items-center gap-2">
+              Upload
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-5 w-5">
+                <path d="M9 2a1 1 0 0 0-.894.553L7.382 4H5a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3h-2.382l-.724-1.447A1 1 0 0 0 12.999 2H9zM12 18a5 5 0 1 1 0-10 5 5 0 0 1 0 10zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z" />
+              </svg>
+            </div>
           </button>
-
-          <div className="flex-1 relative">
-            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-[#6b7785] font-mono text-sm pointer-events-none">$</span>
-            <input
-              type="text"
-              placeholder="type message..."
-              value={message}
-              onChange={(e) => onMessageChange(e.target.value)}
-              className="w-full bg-[rgba(0,0,0,0.7)] text-[#e6f6ff] rounded border border-[rgba(0,240,255,0.2)] pl-8 pr-4 py-3 outline-none font-mono text-sm focus:border-[rgba(0,240,255,0.5)] transition-colors"
-            />
-          </div>
-
+          
+          <input
+            type="text"
+            placeholder="Type a message..."
+            value={message}
+            onChange={(e) => onMessageChange(e.target.value)}
+            className="flex-1 bg-black/50 text-white rounded-xl px-4 py-3 outline-none"
+            style={{ border: '1px solid rgba(0,240,255,0.15)' }}
+          />
+          
           <button
             type="submit"
             disabled={sending}
-            className="px-6 py-3 rounded bg-[rgba(0,240,255,0.2)] border border-[rgba(0,240,255,0.3)] text-[#00f0ff] font-mono text-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed hover:bg-[rgba(0,240,255,0.3)] hover:border-[rgba(0,240,255,0.5)]"
+            className="px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            style={{
+              background: 'linear-gradient(135deg, #00f0ff, #8a2be2)',
+              boxShadow: '0 4px 20px rgba(0,240,255,0.25)'
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.boxShadow = '0 8px 30px rgba(0,240,255,0.45)')}
+            onMouseLeave={(e) => (e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,240,255,0.25)')}
           >
-            {sending ? 'sending...' : 'send'}
+            {sending ? 'Sending…' : 'Send'}
           </button>
         </div>
       </form>
