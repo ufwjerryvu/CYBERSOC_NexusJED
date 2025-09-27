@@ -220,8 +220,8 @@ function resolvePort() {
 }
 
 const PORT = resolvePort();
-server.listen(PORT, () => {
-  console.log(`[forum-ws] listening on http://localhost:${PORT} (path: /message)`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`[forum-ws] listening on http://0.0.0.0:${PORT} (path: /message)`);
 });
 
 module.exports = { io };
