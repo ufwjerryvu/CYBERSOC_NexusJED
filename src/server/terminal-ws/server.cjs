@@ -17,10 +17,10 @@ const connections = new Map();
 const ipConnections = new Map();
 
 const IDLE_TIMEOUT = 15 * 60 * 1000;     /* In milliseconds */
-const MAX_CONNECTIONS_PER_IP = 3;
+const MAX_CONNECTIONS_PER_IP = 2;
 
 /* Scalability configurations */
-const MAX_CONCURRENT_CONTAINERS = 30;  /* Adjust based on server capacity */
+const MAX_CONCURRENT_CONTAINERS = 75;  /* Adjust based on server capacity */
 /** @type {QueueItem[]} */
 const containerQueue = [];
 let activeContainers = 0;
