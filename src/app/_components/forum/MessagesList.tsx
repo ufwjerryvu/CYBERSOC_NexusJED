@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback } from "react";
+import { useRef, useEffect } from "react";
 import Message from "./Message";
 import type { Socket } from "socket.io-client";
 

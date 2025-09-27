@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React from "react";
 import MessageMenu from "./MessageMenu";
 import type { Socket } from "socket.io-client";
 
@@ -55,7 +55,7 @@ export default function Message({
           method: "PATCH",
           headers: { 
             "Content-Type": "application/json",
-            "x-user-email": currentUserEmail || ""
+            "x-user-email": currentUserEmail ?? ""
           },
           body: JSON.stringify({ 
             action: "remove-image", 
