@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
+import { useAuth } from "~/contexts/AuthContext";
 
 interface ChatMessage {
   id: string;
@@ -13,22 +14,13 @@ interface ChatMessage {
   ts: number;
 }
 
-function getCookie(name: string): string | null {
-  const match = document.cookie
-    .split(";")
-    .map((c) => c.trim())
-    .find((c) => c.startsWith(name + "="));
-  if (!match) return null;
-  return decodeURIComponent(match.split("=")[1] ?? "");
-}
-
 export function useForum() {
   const router = useRouter();
-  
-  // User state
-  const [email, setEmail] = useState<string | null>(null);
-  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
-  const [checking, setChecking] = useState(true);
+  const { user } = useAuth();
+
+  // User state derived from auth context
+  const email = user?.email || null;
+  const isCurrentUserAdmin = user?.isAdmin || false;
   
   // Messages state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -61,36 +53,12 @@ export function useForum() {
   
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Initialize user and check authentication
+  // Authentication check - user is handled by AuthContext
   useEffect(() => {
-    const tokenEmail = getCookie("access_token");
-    if (!tokenEmail) {
+    if (!user) {
       router.replace("/login");
-      return;
     }
-    setEmail(tokenEmail);
-    
-    // Fetch user admin status
-    const fetchUserInfo = async () => {
-      try {
-        const response = await fetch("/api/user", {
-          headers: {
-            "x-user-email": tokenEmail
-          }
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          setIsCurrentUserAdmin(userData.isAdmin || false);
-        }
-      } catch (error) {
-        console.error("Failed to fetch user info:", error);
-      }
-    };
-    
-    fetchUserInfo();
-    setChecking(false);
-  }, [router]);
+  }, [user, router]);
 
   // Load initial messages
   useEffect(() => {
@@ -148,10 +116,10 @@ export function useForum() {
 
   // Setup WebSocket connection
   useEffect(() => {
-    if (loadingHistory) return;
+    if (loadingHistory || !user) return;
 
     const rawEnvUrl = process.env.WEBSOCKET_URL || "http://localhost:8000";
-    
+
     const normalizeSocketUrl = (u: string) => {
       try {
         if (u.startsWith("ws://")) return "http://" + u.slice(5);
@@ -163,7 +131,14 @@ export function useForum() {
     };
 
     const url = normalizeSocketUrl(rawEnvUrl);
-    const s = io(url, { path: "/message" });
+    const s = io(url, {
+      path: "/message",
+      auth: {
+        userId: user.id,
+        email: user.email,
+        username: user.username
+      }
+    });
     setSock(s);
 
     const onChatMessage = (msg: ChatMessage) => {
@@ -205,7 +180,7 @@ export function useForum() {
       s.off("message:image-removed", onImageRemoved);
       s.disconnect();
     };
-  }, [loadingHistory]);
+  }, [loadingHistory, user]);
 
   // Message handling functions
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -235,7 +210,13 @@ export function useForum() {
     setShouldAutoScroll(true);
     setIsAtBottom(true);
     
-    sock.emit("chat:message", { email, text, images: imageUrls });
+    sock.emit("chat:message", {
+      userId: user?.id,
+      email: user?.email,
+      username: user?.username,
+      text,
+      images: imageUrls
+    });
     setMessage("");
     setImageFiles([]);
     setImagePreviews([]);
@@ -254,22 +235,19 @@ export function useForum() {
       alert("Message ID is missing");
       return;
     }
-    
+
     if (!confirm("Are you sure you want to delete this message?")) {
       return;
     }
 
     try {
       const response = await fetch(`/api/messages/${messageId}`, {
-        method: "DELETE",
-        headers: {
-          "x-user-email": email || ""
-        }
+        method: "DELETE"
       });
 
       if (response.ok) {
         setMessages(prev => prev.filter(m => m.id !== messageId));
-        
+
         if (sock) {
           sock.emit("message:deleted", { messageId });
         }
@@ -303,10 +281,9 @@ export function useForum() {
       const response = await fetch(`/api/messages/${messageId}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-          "x-user-email": email || ""
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           text: trimmedText,
           images: editingImages
         }),
@@ -367,7 +344,6 @@ export function useForum() {
     // State
     email,
     isCurrentUserAdmin,
-    checking,
     messages,
     loadingHistory,
     hasMoreMessages,
@@ -384,7 +360,7 @@ export function useForum() {
     shouldAutoScroll,
     sock,
     fileInputRef,
-    
+
     // Actions
     setMessage,
     setEditingText,

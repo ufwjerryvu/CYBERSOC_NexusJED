@@ -12,7 +12,6 @@ export default function ForumPage() {
     const { user, loading } = useAuth();
     const {
         // State
-        checking,
         loadingHistory,
         messages,
         loadingMore,
@@ -48,7 +47,7 @@ export default function ForumPage() {
         handleScrollChange,
     } = useForum();
 
-    if (loading || checking || loadingHistory) {
+    if (loading || loadingHistory) {
         return <LoadingScreen />;
     }
 

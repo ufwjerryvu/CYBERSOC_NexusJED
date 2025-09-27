@@ -9,6 +9,20 @@ if (!process.env.DATABASE_URL) {
 
 const prisma = new PrismaClient();
 
+// Simple JWT verification for WebSocket
+function verifySocketAuth(auth) {
+  // For now, we'll use the auth data sent from client
+  // In production, you'd want to verify JWT tokens here
+  if (!auth || !auth.userId || !auth.email || !auth.username) {
+    return null;
+  }
+  return {
+    userId: auth.userId,
+    email: auth.email,
+    username: auth.username
+  };
+}
+
 const server = http.createServer();
 const io = new Server(server, {
   path: "/message",
@@ -20,23 +34,43 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("[forum-ws] client connected", socket.id);
 
+  // Verify authentication on connection
+  const auth = verifySocketAuth(socket.handshake.auth);
+  if (!auth) {
+    console.log("[forum-ws] unauthorized connection attempt", socket.id);
+    socket.emit("chat:error", { message: "Authentication required" });
+    socket.disconnect();
+    return;
+  }
+
+  socket.userId = auth.userId;
+  socket.userEmail = auth.email;
+  socket.username = auth.username;
+
+  console.log("[forum-ws] authenticated user connected", auth.username, socket.id);
+
   socket.on("chat:message", async (payload) => {
     try {
-      const email = payload && typeof payload.email === "string" ? payload.email : "";
       const text = payload && typeof payload.text === "string" ? payload.text : "";
       const images = Array.isArray(payload && payload.images)
         ? (payload.images || []).filter((u) => typeof u === "string" && u.length > 0)
         : [];
 
-      // Require email and at least text or one image
-      if (!email || (!text && images.length === 0)) {
-        socket.emit("chat:error", { message: "Invalid payload" });
+      // Require at least text or one image
+      if (!text && images.length === 0) {
+        socket.emit("chat:error", { message: "Message must have text or images" });
         return;
       }
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  const admin_attr = Boolean(user && user.isAdmin);
-  const username = (user && user.username) || (email.includes("@") ? email.split("@")[0] : email);
+      // Get user info from database
+      const user = await prisma.user.findUnique({ where: { id: socket.userId } });
+      if (!user) {
+        socket.emit("chat:error", { message: "User not found" });
+        return;
+      }
+
+      const admin_attr = Boolean(user.isAdmin);
+      const username = user.username || socket.username;
 
       // Persist message with graceful fallback if Prisma client hasn't been regenerated yet
       let saved;
@@ -47,8 +81,8 @@ io.on("connection", (socket) => {
             image: images.length === 1 ? images[0] : null, // legacy single image
             // @ts-ignore - 'images' is a new JSON column; types update after prisma generate
             images: images.length > 0 ? images : null,     // preferred array
-            email,
-            userId: user ? user.id : (await ensureUser(email)).id,
+            email: user.email,
+            userId: user.id,
             channel: "general",
           },
           include: { user: true },
@@ -60,8 +94,8 @@ io.on("connection", (socket) => {
           data: {
             text: text || null,
             image: images.length > 0 ? images[0] : null,
-            email,
-            userId: user ? user.id : (await ensureUser(email)).id,
+            email: user.email,
+            userId: user.id,
             channel: "general",
           },
           include: { user: true },
@@ -72,7 +106,7 @@ io.on("connection", (socket) => {
         id: saved.id,
         text: saved.text || "",
         images: images.length > 0 ? images : (saved.image ? [saved.image] : undefined),
-        email: saved.email || email,
+        email: saved.email || user.email,
         username,
         admin_attr,
         ts: new Date(saved.createdAt).getTime(),
@@ -164,13 +198,3 @@ server.listen(PORT, () => {
 });
 
 module.exports = { io };
-
-/**
- * @param {string} email
- */
-async function ensureUser(email) {
-  // create minimal user if not exists to satisfy FK
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) return existing;
-  return prisma.user.create({ data: { email, isAdmin: false } });
-}

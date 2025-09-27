@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
+import { getUserFromToken } from "~/lib/auth";
+import { cookies } from "next/headers";
 
 export async function GET(request: Request) {
   try {
@@ -52,5 +54,61 @@ export async function GET(request: Request) {
   } catch (err) {
     console.error("[api/messages] GET error", err);
     return NextResponse.json({ error: "Failed to load messages" }, { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  try {
+    // Check authentication
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('access_token')?.value;
+    const currentUser = await getUserFromToken(accessToken || '');
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
+    const { text, images } = await request.json();
+
+    // Validate that we have either text or images
+    if (!text?.trim() && (!images || images.length === 0)) {
+      return NextResponse.json({ error: "Message must have text or images" }, { status: 400 });
+    }
+
+    // Create the message
+    const message = await db.message.create({
+      data: {
+        text: text?.trim() || "",
+        images: images && images.length > 0 ? images : null,
+        image: images && images.length > 0 ? images[0] : null, // Legacy field
+        userId: currentUser.id,
+        email: currentUser.email,
+        channel: "general"
+      },
+      include: {
+        user: true
+      }
+    });
+
+    // Format the response
+    const formattedMessage = {
+      id: message.id,
+      text: message.text ?? "",
+      images: Array.isArray((message as any).images) && ((message as any).images as string[]).length > 0
+        ? ((message as any).images as string[])
+        : (message.image ? [message.image] : undefined),
+      email: message.email ?? message.user?.email ?? "",
+      username: message.user?.username ?? (message.email ? message.email.split("@")[0] : "user"),
+      admin_attr: Boolean(message.user?.isAdmin),
+      ts: message.createdAt.getTime(),
+    };
+
+    return NextResponse.json({
+      success: true,
+      message: formattedMessage
+    });
+  } catch (err) {
+    console.error("[api/messages] POST error", err);
+    return NextResponse.json({ error: "Failed to create message" }, { status: 500 });
   }
 }

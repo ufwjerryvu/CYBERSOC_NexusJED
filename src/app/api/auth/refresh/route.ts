@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { type NextRequest, NextResponse } from 'next/server';
 import { verifyRefreshToken, generateTokens } from '~/lib/auth';
 import { db } from '~/server/db';
 
@@ -7,18 +7,26 @@ export async function POST(request: NextRequest) {
     const refreshToken = request.cookies.get('refresh_token')?.value;
 
     if (!refreshToken) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Refresh token not found' },
         { status: 401 }
       );
+      // Clear invalid cookies
+      response.cookies.set('access_token', '', { maxAge: 0 });
+      response.cookies.set('refresh_token', '', { maxAge: 0 });
+      return response;
     }
 
     const payload = verifyRefreshToken(refreshToken);
     if (!payload) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'Invalid refresh token' },
         { status: 401 }
       );
+      // Clear invalid cookies
+      response.cookies.set('access_token', '', { maxAge: 0 });
+      response.cookies.set('refresh_token', '', { maxAge: 0 });
+      return response;
     }
 
     const user = await db.user.findUnique({
@@ -26,10 +34,14 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { error: 'User not found' },
         { status: 401 }
       );
+      // Clear invalid cookies
+      response.cookies.set('access_token', '', { maxAge: 0 });
+      response.cookies.set('refresh_token', '', { maxAge: 0 });
+      return response;
     }
 
     const { accessToken, refreshToken: newRefreshToken } = generateTokens({
@@ -65,9 +77,13 @@ export async function POST(request: NextRequest) {
     return response;
   } catch (error) {
     console.error('Token refresh error:', error);
-    return NextResponse.json(
+    const response = NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
     );
+    // Clear potentially corrupted cookies
+    response.cookies.set('access_token', '', { maxAge: 0 });
+    response.cookies.set('refresh_token', '', { maxAge: 0 });
+    return response;
   }
 }
