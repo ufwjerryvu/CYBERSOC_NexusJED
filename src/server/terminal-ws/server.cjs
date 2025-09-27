@@ -7,7 +7,7 @@ const os = require("os");
 const fs = require('fs');
 const path = require('path');
 
-const port = 5050;
+const port = process.env.TERMINAL_WS_PORT || 5050;
 const wss = new WebSocket.Server({ port: port});
 
 console.log(`Terminal WS server is running on port ${port}`);
