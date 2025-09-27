@@ -92,7 +92,7 @@ function startContainer(ws, req, containerId, clientIP) {
     activeContainers++;
     
     /* Docker initialization */
-    const dockerRun = spawn("sudo docker", [
+    const dockerRun = spawn("docker", [
         "run",
         "-it",              /* Interactive and TTY */
         "--rm",             /* Remove the container when done */
@@ -209,8 +209,10 @@ function startContainer(ws, req, containerId, clientIP) {
     /* Send welcome message */
     ws.send("\r\n" +
         "╔═══════════════════════════════════════════════════════════════════╗\r\n" +
-        "║                     TERMINAL CONTAINER v1.0                       ║\r\n" +
-        "║                       Made by Jerry & Erik                        ║\r\n" +
+        "║                         NEXUS TERMINAL                            ║\r\n" +
+        "║                                                                   ║\r\n" +
+        "║                   Made by Jerry Vu & Erik Hai                     ║\r\n" +
+        "║           from Sydney University Cybersecurity Society            ║\r\n" +
         "╠═══════════════════════════════════════════════════════════════════╣\r\n" +
         "║                                                                   ║\r\n" +
         "║  System Info:                                                     ║\r\n" +
