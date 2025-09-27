@@ -54,7 +54,10 @@ const TerminalPage = () => {
 
             // WebSocket connection
             try {
-                wsRef.current = new WebSocket("ws://localhost:5050");
+                const wsUrl = process.env.NODE_ENV === 'production'
+                    ? `ws://${window.location.hostname}:5050`
+                    : "ws://localhost:5050";
+                wsRef.current = new WebSocket(wsUrl);
 
                 wsRef.current.onopen = () => {
                     term.write("\x1b[32mConnected to terminal server\x1b[0m\r\n");
