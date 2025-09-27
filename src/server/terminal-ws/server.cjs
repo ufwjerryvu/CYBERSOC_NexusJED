@@ -92,7 +92,7 @@ function startContainer(ws, req, containerId, clientIP) {
     activeContainers++;
     
     /* Docker initialization */
-    const dockerRun = spawn("docker", [
+    const dockerRun = spawn("sudo docker", [
         "run",
         "-it",              /* Interactive and TTY */
         "--rm",             /* Remove the container when done */
