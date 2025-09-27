@@ -4,7 +4,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 import { type Metadata } from "next";
 import { Lato } from "next/font/google";
 
-import { TRPCReactProvider } from "~/trpc/react";
+// import { TRPCReactProvider } from "~/trpc/react";
 
 export const metadata: Metadata = {
   title: "NexusJED",
@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={lato.className}>
       <body>
-        <TRPCReactProvider>{children}</TRPCReactProvider>
+        {/* <TRPCReactProvider>{children}</TRPCReactProvider> */}
         {children}
       </body>
     </html>
