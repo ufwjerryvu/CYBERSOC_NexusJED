@@ -4,10 +4,21 @@ const { Server } = require("socket.io");
 const { PrismaClient } = require("@prisma/client");
 
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = "file:./prisma/dev.db";
+  process.env.DATABASE_URL = "file:./dev.db";
 }
 
+console.log("[forum-ws] Using database:", process.env.DATABASE_URL);
+
 const prisma = new PrismaClient();
+
+// Debug: Log existing users on startup
+prisma.user.findMany({ select: { id: true, email: true, username: true } })
+  .then(users => {
+    console.log("[forum-ws] Available users in database:", users);
+  })
+  .catch(err => {
+    console.error("[forum-ws] Error querying users:", err);
+  });
 
 // Simple JWT verification for WebSocket
 function verifySocketAuth(auth) {
@@ -63,11 +74,27 @@ io.on("connection", (socket) => {
       }
 
       // Get user info from database
-      const user = await prisma.user.findUnique({ where: { id: socket.userId } });
+      console.log("[forum-ws] Looking for user with ID:", socket.userId);
+      let user = await prisma.user.findUnique({ where: { id: socket.userId } });
+
+      // If user not found by ID, try to find by email as fallback
+      if (!user && socket.userEmail) {
+        console.log("[forum-ws] User not found by ID, trying email:", socket.userEmail);
+        user = await prisma.user.findUnique({ where: { email: socket.userEmail } });
+        if (user) {
+          console.log("[forum-ws] Found user by email:", user.email, "with ID:", user.id);
+          // Update socket userId to the correct one
+          socket.userId = user.id;
+        }
+      }
+
       if (!user) {
-        socket.emit("chat:error", { message: "User not found" });
+        console.log("[forum-ws] User not found in database with ID:", socket.userId);
+        console.log("[forum-ws] Auth data was:", { userId: socket.userId, email: socket.userEmail, username: socket.username });
+        socket.emit("chat:error", { message: "User not found - please log out and log back in" });
         return;
       }
+      console.log("[forum-ws] Found user:", { id: user.id, email: user.email, username: user.username });
 
       const admin_attr = Boolean(user.isAdmin);
       const username = user.username || socket.username;
