@@ -42,6 +42,14 @@ const Navbar: React.FC = () => {
                       Terminal
                     </Link>
                   </li>
+                  <li>
+                    <Link 
+                      href="https://nexusctf.usydcyber.com/challenges" 
+                      className="relative block px-2 py-2.5 text-gray-300 font-medium tracking-wider text-sm no-underline transition-all duration-300 hover:text-cyan-300 hover:scale-105 hover:translate-y-[-2px] after:content-[''] after:absolute after:left-[10%] after:bottom-0 after:w-[80%] after:h-[2px] after:bg-gradient-to-r after:from-transparent after:via-cyan-400 after:to-transparent after:scale-x-0 after:transition-transform after:duration-500 hover:after:scale-x-100 hover:drop-shadow-[0_0_15px_rgba(0,240,255,0.6)]"
+                    >
+                      Challenges
+                    </Link>
+                  </li>
                 </ul>
               </div>
             </div>
