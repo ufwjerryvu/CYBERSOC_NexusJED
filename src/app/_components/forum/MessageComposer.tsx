@@ -26,7 +26,7 @@ export default function MessageComposer({
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const chosen = Array.from(e.target.files || []);
+    const chosen = Array.from(e.target.files ?? []);
     if (chosen.length === 0) return;
     
     // Enforce max 5 images
