@@ -131,6 +131,9 @@ export function useForum() {
     };
 
     const url = normalizeSocketUrl(rawEnvUrl);
+    console.log("WebSocket URL:", url);
+    console.log("Connecting with auth:", { userId: user.id, email: user.email, username: user.username });
+
     const s = io(url, {
       path: "/message",
       auth: {
@@ -168,12 +171,32 @@ export function useForum() {
       }));
     };
 
+    s.on("connect", () => {
+      console.log("WebSocket connected successfully");
+    });
+
+    s.on("disconnect", (reason) => {
+      console.log("WebSocket disconnected:", reason);
+    });
+
+    s.on("connect_error", (error) => {
+      console.error("WebSocket connection error:", error);
+    });
+
+    s.on("chat:error", (error) => {
+      console.error("Chat error:", error);
+    });
+
     s.on("chat:message", onChatMessage);
     s.on("message:deleted", onMessageDeleted);
     s.on("message:edited", onMessageEdited);
     s.on("message:image-removed", onImageRemoved);
 
     return () => {
+      s.off("connect");
+      s.off("disconnect");
+      s.off("connect_error");
+      s.off("chat:error");
       s.off("chat:message", onChatMessage);
       s.off("message:deleted", onMessageDeleted);
       s.off("message:edited", onMessageEdited);
