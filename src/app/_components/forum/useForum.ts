@@ -118,12 +118,30 @@ export function useForum() {
   const getAccessToken = (): string | null => {
     if (typeof document === 'undefined') return null;
 
-    console.log("All cookies:", document.cookie);
-    const cookies = document.cookie.split(';');
+    const cookieString = document.cookie;
+    console.log("All cookies:", cookieString);
+    console.log("Cookie string length:", cookieString.length);
+
+    if (!cookieString || cookieString.trim() === '') {
+      console.log("No cookies found at all");
+      return null;
+    }
+
+    const cookies = cookieString.split(';');
+    console.log("Number of cookies:", cookies.length);
 
     for (const cookie of cookies) {
-      const [name, value] = cookie.trim().split('=');
-      console.log("Cookie found:", { name, value: value?.substring(0, 20) + '...' });
+      const trimmedCookie = cookie.trim();
+      if (!trimmedCookie) continue;
+
+      const equalIndex = trimmedCookie.indexOf('=');
+      if (equalIndex === -1) continue;
+
+      const name = trimmedCookie.substring(0, equalIndex);
+      const value = trimmedCookie.substring(equalIndex + 1);
+
+      console.log("Cookie found:", { name, valueLength: value?.length || 0 });
+
       if (name === 'access_token') {
         const token = value ? decodeURIComponent(value) : null;
         console.log("Access token found:", token ? "Yes" : "No");
@@ -141,31 +159,52 @@ export function useForum() {
 
     let accessToken = getAccessToken();
 
-    // If no token from cookies, try to get a fresh one by calling the auth API
+    // If no token from cookies, try alternative approaches
     if (!accessToken) {
-      console.log("No access token in cookies, attempting to fetch from /api/auth/me");
-      fetch('/api/auth/me', {
+      console.log("No access token in cookies, trying alternative approaches...");
+
+      // First, let's try to force a refresh of the token
+      fetch('/api/auth/refresh', {
+        method: 'POST',
         credentials: 'include',
         cache: 'no-store'
       })
       .then(async (res) => {
+        console.log("Refresh response status:", res.status);
+        console.log("Refresh response headers:", Array.from(res.headers.entries()));
+
         if (res.ok) {
-          console.log("Successfully authenticated with server, retrying token retrieval");
+          console.log("Token refresh successful, checking cookies again");
           // Wait a bit for cookies to be set
           setTimeout(() => {
             const newToken = getAccessToken();
             if (newToken) {
-              console.log("Token found after refresh, attempting WebSocket connection");
-              // Reconnect with new token - this will trigger the useEffect again
-              refreshUser();
+              console.log("Token found after refresh, will reconnect WebSocket");
+              // This will trigger the useEffect again with the new token
+            } else {
+              console.log("Still no token after refresh - cookies might not be working");
+              // As a last resort, try to connect without authentication for debugging
+              console.log("Attempting WebSocket connection without authentication to test connectivity");
             }
-          }, 100);
+          }, 200);
         } else {
-          console.log("Failed to authenticate with server:", res.status);
+          console.log("Token refresh failed, checking if user is logged in...");
+          // Try /api/auth/me as fallback
+          fetch('/api/auth/me', {
+            credentials: 'include',
+            cache: 'no-store'
+          })
+          .then(meRes => {
+            console.log("Auth check response status:", meRes.status);
+            if (!meRes.ok) {
+              console.log("User not authenticated, redirecting to login");
+              router.replace("/login");
+            }
+          });
         }
       })
       .catch(err => {
-        console.error("Error checking auth status:", err);
+        console.error("Error refreshing token:", err);
       });
       return;
     }

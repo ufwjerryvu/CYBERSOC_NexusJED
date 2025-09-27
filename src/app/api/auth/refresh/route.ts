@@ -4,7 +4,9 @@ import { db } from '~/server/db';
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[REFRESH] All request cookies:', request.cookies.getAll());
     const refreshToken = request.cookies.get('refresh_token')?.value;
+    console.log('[REFRESH] Refresh token found:', refreshToken ? 'Yes' : 'No');
 
     if (!refreshToken) {
       const response = NextResponse.json(
