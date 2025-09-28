@@ -22,8 +22,25 @@ prisma.user.findMany({ select: { id: true, email: true, username: true } })
 
 // Simple JWT verification for WebSocket
 function verifySocketAuth(auth) {
-  // For now, we'll use the auth data sent from client
-  // In production, you'd want to verify JWT tokens here
+  // If auth contains a token, verify it
+  if (auth && auth.token) {
+    try {
+      // You'll need to import your JWT verification logic
+      const payload = verifyAccessToken(auth.token); // You need to implement this
+      if (payload) {
+        return {
+          userId: payload.userId,
+          email: payload.email,
+          username: payload.username
+        };
+      }
+    } catch (error) {
+      console.error("[forum-ws] JWT verification failed:", error);
+      return null;
+    }
+  }
+  
+  // Fallback to existing logic for backward compatibility
   if (!auth || !auth.userId || !auth.email || !auth.username) {
     return null;
   }
@@ -34,7 +51,45 @@ function verifySocketAuth(auth) {
   };
 }
 
-const server = http.createServer();
+// Create HTTP server with request handler
+const server = http.createServer((req, res) => {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  // Health check endpoint
+  if (req.url === '/health' || req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      status: 'healthy',
+      service: 'forum-websocket',
+      timestamp: new Date().toISOString(),
+      database: 'connected'
+    }));
+    return;
+  }
+
+  // Socket.IO endpoints - let Socket.IO handle these
+  if (req.url && req.url.startsWith('/message/socket.io')) {
+    // Return 404 for Socket.IO paths that aren't handled
+    res.writeHead(404);
+    res.end('Not Found');
+    return;
+  }
+
+  // Default response for other routes
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Forum WebSocket Server\n');
+});
+
 const io = new Server(server, {
   path: "/message",
   cors: {
@@ -204,7 +259,6 @@ io.on("connection", (socket) => {
   });
 });
 
-
 function resolvePort() {
   if (process.env.FORUM_WS_PORT) return parseInt(process.env.FORUM_WS_PORT, 10);
   if (process.env.WEBSOCKET_URL) {
@@ -212,9 +266,7 @@ function resolvePort() {
       const u = new URL(process.env.WEBSOCKET_URL);
       if (u.port) return parseInt(u.port, 10);
       return u.protocol === "https:" ? 443 : 80;
-    } catch (_) {
- 
-    }
+    } catch (_) {}
   }
   return 8000;
 }
@@ -222,6 +274,12 @@ function resolvePort() {
 const PORT = resolvePort();
 server.listen(PORT, '0.0.0.0', () => {
   console.log(`[forum-ws] listening on http://0.0.0.0:${PORT} (path: /message)`);
+  console.log(`[forum-ws] Health endpoint: http://0.0.0.0:${PORT}/health`);
+});
+
+// Add error handling
+server.on('error', (error) => {
+  console.error('[forum-ws] Server error:', error);
 });
 
 module.exports = { io };
