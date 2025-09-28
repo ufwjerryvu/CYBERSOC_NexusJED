@@ -2,8 +2,12 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { db } from '~/server/db';
 
-const JWT_SECRET = process.env.AUTH_SECRET || 'fallback-secret';
-const REFRESH_SECRET = process.env.AUTH_SECRET + '-refresh' || 'fallback-refresh-secret';
+if (!process.env.AUTH_SECRET) {
+  throw new Error('AUTH_SECRET environment variable is required for JWT authentication');
+}
+
+const JWT_SECRET = process.env.AUTH_SECRET;
+const REFRESH_SECRET = process.env.AUTH_SECRET + '-refresh';
 
 export interface JWTPayload {
   userId: string;
