@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
+    const uploadsDir = path.join("/tmp", "uploads");
     await fs.mkdir(uploadsDir, { recursive: true });
 
     const ext = file.type.split("/")[1] || "png";
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
     const target = path.join(uploadsDir, base);
     await fs.writeFile(target, buffer);
 
-    const url = `/uploads/${base}`;
+    const url = `api/upload/${base}`;
     return NextResponse.json({ url });
   } catch (err) {
     console.error("[upload] error:", err);

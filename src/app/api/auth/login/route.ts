@@ -4,17 +4,25 @@ import { verifyPassword, generateTokens } from '~/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
+    const { email, password } = await request.json();  // 'email' can be username too
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'Email/username and password are required' },
         { status: 400 }
       );
     }
 
-    const user = await db.user.findUnique({
-      where: { email: email.toLowerCase() },
+    // Check if input is email format
+    const isEmail = email.includes('@');
+
+    const user = await db.user.findFirst({
+      where: {
+        OR: [
+          { email: isEmail ? email.toLowerCase() : undefined },
+          { username: email }  // 'email' variable contains the input
+        ].filter(Boolean)
+      }
     });
 
     if (!user?.password) {

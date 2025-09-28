@@ -21,37 +21,37 @@ export function useForum() {
   // User state derived from auth context
   const email = user?.email || null;
   const isCurrentUserAdmin = user?.isAdmin || false;
-  
+
   // Messages state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [oldestTimestamp, setOldestTimestamp] = useState<number | null>(null);
-  
+
   // Compose state
   const [message, setMessage] = useState("");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
-  
+
   // Edit state
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>("");
   const [editingImages, setEditingImages] = useState<string[]>([]);
-  
+
   // Modal state
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [modalImage, setModalImage] = useState<string | null>(null);
-  
+
   // Scroll state
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  
+
   // Socket state
   const [sock, setSock] = useState<Socket | null>(null);
   const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "disconnected" | "error">("connecting");
-  
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Authentication check - user is handled by AuthContext
@@ -91,17 +91,17 @@ export function useForum() {
   // Load more messages
   const loadMoreMessages = useCallback(async () => {
     if (!hasMoreMessages || loadingMore || !oldestTimestamp) return;
-    
+
     setLoadingMore(true);
     try {
-      const res = await fetch(`/api/messages?limit=20&before=${oldestTimestamp}`, { 
-        cache: "no-store" 
+      const res = await fetch(`/api/messages?limit=20&before=${oldestTimestamp}`, {
+        cache: "no-store"
       });
-      
+
       if (res.ok) {
         const data = await res.json();
         const newMessages = data.messages || [];
-        
+
         if (newMessages.length > 0) {
           setMessages(prev => [...newMessages, ...prev]);
           setOldestTimestamp(data.oldestTimestamp);
@@ -133,9 +133,9 @@ export function useForum() {
 
     const url = normalizeSocketUrl(rawEnvUrl);
     console.log("🔌 WebSocket URL:", url);
-    console.log("🔑 Connecting with auth:", { 
-      email: user.email, 
-      username: user.username 
+    console.log("🔑 Connecting with auth:", {
+      email: user.email,
+      username: user.username
     });
 
     const s = io(url, {
@@ -165,7 +165,7 @@ export function useForum() {
     s.on("connect_error", (error) => {
       console.error("❌ WebSocket connection error:", error);
       setConnectionStatus("error");
-      
+
       // Log detailed error info
       console.log("Auth data that was sent:", {
         email: user.email,
@@ -186,8 +186,8 @@ export function useForum() {
 
     const onMessageEdited = (data: { messageId: string; newText: string; images?: string[] }) => {
       console.log("✏️ Message edited:", data.messageId);
-      setMessages((prev) => prev.map(m => 
-        m.id === data.messageId 
+      setMessages((prev) => prev.map(m =>
+        m.id === data.messageId
           ? { ...m, text: data.newText, images: data.images || [] }
           : m
       ));
@@ -269,26 +269,26 @@ export function useForum() {
       setSending(false);
       return;
     }
-    
+
     console.log("📤 Sending message:", { text, imageUrls: imageUrls.length });
-    
+
     // Force auto-scroll when user sends a message
     setShouldAutoScroll(true);
     setIsAtBottom(true);
-    
+
     try {
       sock.emit("chat:message", {
         // Server will look up user info based on connection auth
         text,
         images: imageUrls
       });
-      
+
       setMessage("");
       setImageFiles([]);
       setImagePreviews([]);
       setPreviewIndex(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
-      
+
       // Scroll to bottom after a brief delay
       setTimeout(() => setShouldAutoScroll(true), 100);
     } catch (error) {
@@ -311,7 +311,8 @@ export function useForum() {
 
     try {
       const response = await fetch(`/api/messages/${messageId}`, {
-        method: "DELETE"
+        method: "DELETE",
+        credentials: "include" 
       });
 
       if (response.ok) {
@@ -333,7 +334,7 @@ export function useForum() {
   const handleEditMessage = (messageId: string, currentText: string) => {
     const message = messages.find(m => m.id === messageId);
     const currentImages = message?.images || (message?.image ? [message.image] : []);
-    
+
     setEditingMessageId(messageId);
     setEditingText(currentText);
     setEditingImages(currentImages);
@@ -352,6 +353,7 @@ export function useForum() {
         headers: {
           "Content-Type": "application/json"
         },
+        credentials: "include",
         body: JSON.stringify({
           text: trimmedText,
           images: editingImages
@@ -359,12 +361,12 @@ export function useForum() {
       });
 
       if (response.ok) {
-        setMessages(prev => prev.map(m => 
-          m.id === messageId 
+        setMessages(prev => prev.map(m =>
+          m.id === messageId
             ? { ...m, text: trimmedText, images: editingImages }
             : m
         ));
-        
+
         if (sock && connectionStatus === "connected") {
           sock.emit("message:edited", { messageId, newText: trimmedText, images: editingImages });
         }

@@ -47,31 +47,31 @@ export default function Message({
   const handleImageRemove = async (imageIndex: number) => {
     // Update local editing state immediately
     setEditingImages(editingImages.filter((_, idx) => idx !== imageIndex));
-    
+
     // Persist change to database
     if (editingMessageId) {
       try {
         await fetch(`/api/messages/${editingMessageId}`, {
           method: "PATCH",
-          headers: { 
-            "Content-Type": "application/json",
-            "x-user-email": currentUserEmail ?? ""
+          headers: {
+            "Content-Type": "application/json"
           },
-          body: JSON.stringify({ 
-            action: "remove-image", 
-            imageIndex 
+          credentials: "include",  // Add this, remove x-user-email
+          body: JSON.stringify({
+            action: "remove-image",
+            imageIndex
           })
         });
       } catch (error) {
         console.error("Failed to persist image removal:", error);
       }
     }
-    
+
     // Emit real-time image removal to other users
     if (socket && editingMessageId) {
-      socket.emit("message:image-removed", { 
-        messageId: editingMessageId, 
-        imageIndex 
+      socket.emit("message:image-removed", {
+        messageId: editingMessageId,
+        imageIndex
       });
     }
   };
