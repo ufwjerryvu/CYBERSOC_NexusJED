@@ -7,6 +7,7 @@ import ChatModals from "~/app/_components/forum/ChatModals";
 import { useForum } from "~/app/_components/forum/useForum";
 import { useAuth } from "~/contexts/AuthContext";
 import Navbar from "../_components/global/Navbar";
+import Footer from "../_components/global/Footer";
 
 export default function ForumPage() {
     const { user, loading } = useAuth();
@@ -127,6 +128,7 @@ export default function ForumPage() {
                     </div>
                 </div>
             </div>
+            <Footer></Footer>
         </>
     );
 }

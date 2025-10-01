@@ -25,8 +25,8 @@ function verifySocketAuth(auth) {
   // If auth contains a token, verify it
   if (auth && auth.token) {
     try {
-      // You'll need to import your JWT verification logic
-      const payload = verifyAccessToken(auth.token); // You need to implement this
+
+      const payload = verifyAccessToken(auth.token); 
       if (payload) {
         return {
           userId: payload.userId,

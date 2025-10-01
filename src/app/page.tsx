@@ -87,11 +87,6 @@ export default function Home() {
             TERMINAL AND CHAT
           </h1>
 
-          {/* Subtitle */}
-          <p className="text-xl text-slate-400 mb-12 max-w-2xl mx-auto">
-            45+ challenges • In-browser Linux terminal • Community forum • Elite cyber competition
-          </p>
-
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
             <Link

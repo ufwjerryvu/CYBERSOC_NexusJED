@@ -4,6 +4,7 @@ import { Terminal } from "@xterm/xterm";
 import { useEffect, useRef } from "react";
 import "@xterm/xterm/css/xterm.css";
 import Navbar from "../_components/global/Navbar";
+import Footer from "../_components/global/Footer";
 
 const TerminalPage = () => {
     const terminalRef = useRef<HTMLDivElement | null>(null);
@@ -191,6 +192,7 @@ const TerminalPage = () => {
                     </div>
                 </div>
             </div>
+            <Footer></Footer>
         </>
     );
 };

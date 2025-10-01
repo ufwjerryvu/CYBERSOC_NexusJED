@@ -18,6 +18,10 @@ export function useForum() {
   const router = useRouter();
   const { user } = useAuth();
 
+  useEffect(() => {
+    console.log("WEBSOCKET_URL:", process.env.NEXT_PUBLIC_WEBSOCKET_URL);
+  }, []);
+
   // User state derived from auth context
   const email = user?.email || null;
   const isCurrentUserAdmin = user?.isAdmin || false;
@@ -148,7 +152,7 @@ export function useForum() {
         email: user.email,
         username: user.username
       },
-      transports: ['websocket', 'polling'] // Add this line
+      transports: ['websocket', 'polling']
     });
 
     // Connection event handlers
@@ -312,7 +316,7 @@ export function useForum() {
     try {
       const response = await fetch(`/api/messages/${messageId}`, {
         method: "DELETE",
-        credentials: "include" 
+        credentials: "include"
       });
 
       if (response.ok) {

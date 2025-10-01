@@ -7,6 +7,7 @@ import Link from "next/link";
 import LoadingScreen from "~/app/_components/loading/LoadingScreen";
 import Navbar from "../_components/global/Navbar";
 import { useAuth } from "~/contexts/AuthContext";
+import Footer from "../_components/global/Footer";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
@@ -191,6 +192,7 @@ export default function RegisterPage() {
         </div>
       </section>
     </main>
+    <Footer></Footer>
     </>
   );
 }

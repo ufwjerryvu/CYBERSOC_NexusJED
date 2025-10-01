@@ -7,6 +7,7 @@ import Link from "next/link";
 import LoadingScreen from "~/app/_components/loading/LoadingScreen";
 import Navbar from "../_components/global/Navbar";
 import { useAuth } from "~/contexts/AuthContext";
+import Footer from "../_components/global/Footer";
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("");  // Renamed from email
@@ -145,6 +146,7 @@ export default function LoginPage() {
           </div>
         </section>
       </main>
+      <Footer></Footer>
     </>
   );
 }
