@@ -26,7 +26,7 @@ function verifySocketAuth(auth) {
   if (auth && auth.token) {
     try {
 
-      const payload = verifyAccessToken(auth.token); 
+      const payload = verifyAccessToken(auth.token);
       if (payload) {
         return {
           userId: payload.userId,

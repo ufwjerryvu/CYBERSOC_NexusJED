@@ -39,7 +39,7 @@ export async function GET(request: Request) {
         // @ts-ignore
         ? ((m as any).images as unknown as string[])
         : (m.image ? [m.image] : undefined),
-      email: m.email ?? m.user?.email ?? "",
+      // email: m.email ?? m.user?.email ?? "",
       username: m.user?.username ?? (m.email ? m.email.split("@")[0] : "user"),
       admin_attr: Boolean(m.user?.isAdmin),
       ts: m.createdAt.getTime(),
