@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { io, type Socket } from "socket.io-client";
+import { useAuth } from "~/contexts/AuthContext";
 
 interface ChatMessage {
   id: string;
@@ -13,84 +14,56 @@ interface ChatMessage {
   ts: number;
 }
 
-function getCookie(name: string): string | null {
-  const match = document.cookie
-    .split(";")
-    .map((c) => c.trim())
-    .find((c) => c.startsWith(name + "="));
-  if (!match) return null;
-  return decodeURIComponent(match.split("=")[1] ?? "");
-}
-
 export function useForum() {
   const router = useRouter();
-  
-  // User state
-  const [email, setEmail] = useState<string | null>(null);
-  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
-  const [checking, setChecking] = useState(true);
-  
+  const { user } = useAuth();
+
+  useEffect(() => {
+    console.log("WEBSOCKET_URL:", process.env.NEXT_PUBLIC_WEBSOCKET_URL);
+  }, []);
+
+  // User state derived from auth context
+  const email = user?.email || null;
+  const isCurrentUserAdmin = user?.isAdmin || false;
+
   // Messages state
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [hasMoreMessages, setHasMoreMessages] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [oldestTimestamp, setOldestTimestamp] = useState<number | null>(null);
-  
+
   // Compose state
   const [message, setMessage] = useState("");
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
-  
+
   // Edit state
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>("");
   const [editingImages, setEditingImages] = useState<string[]>([]);
-  
+
   // Modal state
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const [modalImage, setModalImage] = useState<string | null>(null);
-  
+
   // Scroll state
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
-  
+
   // Socket state
   const [sock, setSock] = useState<Socket | null>(null);
-  
+  const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "disconnected" | "error">("connecting");
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Initialize user and check authentication
+  // Authentication check - user is handled by AuthContext
   useEffect(() => {
-    const tokenEmail = getCookie("access_token");
-    if (!tokenEmail) {
+    if (!user) {
       router.replace("/login");
-      return;
     }
-    setEmail(tokenEmail);
-    
-    // Fetch user admin status
-    const fetchUserInfo = async () => {
-      try {
-        const response = await fetch("/api/user", {
-          headers: {
-            "x-user-email": tokenEmail
-          }
-        });
-        
-        if (response.ok) {
-          const userData = await response.json();
-          setIsCurrentUserAdmin(userData.isAdmin || false);
-        }
-      } catch (error) {
-        console.error("Failed to fetch user info:", error);
-      }
-    };
-    
-    fetchUserInfo();
-    setChecking(false);
-  }, [router]);
+  }, [user, router]);
 
   // Load initial messages
   useEffect(() => {
@@ -122,17 +95,17 @@ export function useForum() {
   // Load more messages
   const loadMoreMessages = useCallback(async () => {
     if (!hasMoreMessages || loadingMore || !oldestTimestamp) return;
-    
+
     setLoadingMore(true);
     try {
-      const res = await fetch(`/api/messages?limit=20&before=${oldestTimestamp}`, { 
-        cache: "no-store" 
+      const res = await fetch(`/api/messages?limit=20&before=${oldestTimestamp}`, {
+        cache: "no-store"
       });
-      
+
       if (res.ok) {
         const data = await res.json();
         const newMessages = data.messages || [];
-        
+
         if (newMessages.length > 0) {
           setMessages(prev => [...newMessages, ...prev]);
           setOldestTimestamp(data.oldestTimestamp);
@@ -146,12 +119,12 @@ export function useForum() {
     }
   }, [hasMoreMessages, loadingMore, oldestTimestamp]);
 
-  // Setup WebSocket connection
+  // Setup WebSocket connection - FIXED VERSION
   useEffect(() => {
-    if (loadingHistory) return;
+    if (loadingHistory || !user) return;
 
-    const rawEnvUrl = process.env.WEBSOCKET_URL || "http://localhost:8000";
-    
+    const rawEnvUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "http://localhost:8000";
+
     const normalizeSocketUrl = (u: string) => {
       try {
         if (u.startsWith("ws://")) return "http://" + u.slice(5);
@@ -163,26 +136,69 @@ export function useForum() {
     };
 
     const url = normalizeSocketUrl(rawEnvUrl);
-    const s = io(url, { path: "/message" });
-    setSock(s);
+    console.log("🔌 WebSocket URL:", url);
+    console.log("🔑 Connecting with auth:", {
+      email: user.email,
+      username: user.username
+    });
 
+    const s = io(url, {
+      path: "/message",
+      auth: {
+        // Send the access token from cookies
+        token: document.cookie.replace(/(?:(?:^|.*;\s*)access_token\s*=\s*([^;]*).*$)|^.*$/, '$1'),
+        // Keep the user data as fallback
+        userId: user.id,
+        email: user.email,
+        username: user.username
+      },
+      transports: ['websocket', 'polling']
+    });
+
+    // Connection event handlers
+    s.on("connect", () => {
+      console.log("✅ WebSocket connected successfully");
+      setConnectionStatus("connected");
+    });
+
+    s.on("disconnect", (reason) => {
+      console.log("🔌 WebSocket disconnected:", reason);
+      setConnectionStatus("disconnected");
+    });
+
+    s.on("connect_error", (error) => {
+      console.error("❌ WebSocket connection error:", error);
+      setConnectionStatus("error");
+
+      // Log detailed error info
+      console.log("Auth data that was sent:", {
+        email: user.email,
+        username: user.username
+      });
+    });
+
+    // Message event handlers
     const onChatMessage = (msg: ChatMessage) => {
+      console.log("📨 Received new message:", msg);
       setMessages((prev) => [...prev, msg]);
     };
 
     const onMessageDeleted = (data: { messageId: string }) => {
+      console.log("🗑️ Message deleted:", data.messageId);
       setMessages((prev) => prev.filter(m => m.id !== data.messageId));
     };
 
     const onMessageEdited = (data: { messageId: string; newText: string; images?: string[] }) => {
-      setMessages((prev) => prev.map(m => 
-        m.id === data.messageId 
+      console.log("✏️ Message edited:", data.messageId);
+      setMessages((prev) => prev.map(m =>
+        m.id === data.messageId
           ? { ...m, text: data.newText, images: data.images || [] }
           : m
       ));
     };
 
     const onImageRemoved = (data: { messageId: string; imageIndex: number }) => {
+      console.log("🖼️ Image removed from message:", data.messageId);
       setMessages((prev) => prev.map(m => {
         if (m.id === data.messageId) {
           const currentImages = m.images || (m.image ? [m.image] : []);
@@ -193,60 +209,98 @@ export function useForum() {
       }));
     };
 
+    s.on("chat:error", (error) => {
+      console.error("💬 Chat error:", error);
+    });
+
     s.on("chat:message", onChatMessage);
     s.on("message:deleted", onMessageDeleted);
     s.on("message:edited", onMessageEdited);
     s.on("message:image-removed", onImageRemoved);
 
+    setSock(s);
+    setConnectionStatus("connecting");
+
+    // Cleanup function
     return () => {
+      console.log("🧹 Cleaning up WebSocket connection");
+      s.off("connect");
+      s.off("disconnect");
+      s.off("connect_error");
+      s.off("chat:error");
       s.off("chat:message", onChatMessage);
       s.off("message:deleted", onMessageDeleted);
       s.off("message:edited", onMessageEdited);
       s.off("message:image-removed", onImageRemoved);
       s.disconnect();
     };
-  }, [loadingHistory]);
+  }, [loadingHistory, user]);
 
   // Message handling functions
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!email || !sock) return;
+    if (!email || !sock || connectionStatus !== "connected") {
+      alert("Not connected to chat server");
+      return;
+    }
 
     // Upload images if provided
     let imageUrls: string[] = [];
     if (imageFiles.length > 0) {
-      for (const file of imageFiles) {
-        const fd = new FormData();
-        fd.append("file", file);
-        const res = await fetch("/api/upload", { method: "POST", body: fd });
-        if (!res.ok) {
-          alert("Image upload failed");
-          return;
+      setSending(true);
+      try {
+        for (const file of imageFiles) {
+          const fd = new FormData();
+          fd.append("file", file);
+          const res = await fetch("/api/upload", { method: "POST", body: fd });
+          if (!res.ok) {
+            throw new Error("Image upload failed");
+          }
+          const data = await res.json();
+          imageUrls.push(data.url as string);
         }
-        const data = await res.json();
-        imageUrls.push(data.url as string);
+      } catch (error) {
+        console.error("Image upload failed:", error);
+        alert("Image upload failed");
+        setSending(false);
+        return;
       }
     }
 
     const text = message.trim();
-    if (!text && imageUrls.length === 0) return;
-    
+    if (!text && imageUrls.length === 0) {
+      alert("Message cannot be empty");
+      setSending(false);
+      return;
+    }
+
+    console.log("📤 Sending message:", { text, imageUrls: imageUrls.length });
+
     // Force auto-scroll when user sends a message
     setShouldAutoScroll(true);
     setIsAtBottom(true);
-    
-    sock.emit("chat:message", { email, text, images: imageUrls });
-    setMessage("");
-    setImageFiles([]);
-    setImagePreviews([]);
-    setPreviewIndex(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
 
-    setSending(true);
-    setTimeout(() => setSending(false), 500);
-    
-    // Scroll to bottom after a brief delay
-    setTimeout(() => setShouldAutoScroll(true), 100);
+    try {
+      sock.emit("chat:message", {
+        // Server will look up user info based on connection auth
+        text,
+        images: imageUrls
+      });
+
+      setMessage("");
+      setImageFiles([]);
+      setImagePreviews([]);
+      setPreviewIndex(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      // Scroll to bottom after a brief delay
+      setTimeout(() => setShouldAutoScroll(true), 100);
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      alert("Failed to send message");
+    } finally {
+      setTimeout(() => setSending(false), 500);
+    }
   };
 
   const handleDeleteMessage = async (messageId: string) => {
@@ -254,7 +308,7 @@ export function useForum() {
       alert("Message ID is missing");
       return;
     }
-    
+
     if (!confirm("Are you sure you want to delete this message?")) {
       return;
     }
@@ -262,15 +316,13 @@ export function useForum() {
     try {
       const response = await fetch(`/api/messages/${messageId}`, {
         method: "DELETE",
-        headers: {
-          "x-user-email": email || ""
-        }
+        credentials: "include"
       });
 
       if (response.ok) {
         setMessages(prev => prev.filter(m => m.id !== messageId));
-        
-        if (sock) {
+
+        if (sock && connectionStatus === "connected") {
           sock.emit("message:deleted", { messageId });
         }
       } else {
@@ -286,7 +338,7 @@ export function useForum() {
   const handleEditMessage = (messageId: string, currentText: string) => {
     const message = messages.find(m => m.id === messageId);
     const currentImages = message?.images || (message?.image ? [message.image] : []);
-    
+
     setEditingMessageId(messageId);
     setEditingText(currentText);
     setEditingImages(currentImages);
@@ -303,23 +355,23 @@ export function useForum() {
       const response = await fetch(`/api/messages/${messageId}`, {
         method: "PUT",
         headers: {
-          "Content-Type": "application/json",
-          "x-user-email": email || ""
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify({ 
+        credentials: "include",
+        body: JSON.stringify({
           text: trimmedText,
           images: editingImages
         }),
       });
 
       if (response.ok) {
-        setMessages(prev => prev.map(m => 
-          m.id === messageId 
+        setMessages(prev => prev.map(m =>
+          m.id === messageId
             ? { ...m, text: trimmedText, images: editingImages }
             : m
         ));
-        
-        if (sock) {
+
+        if (sock && connectionStatus === "connected") {
           sock.emit("message:edited", { messageId, newText: trimmedText, images: editingImages });
         }
 
@@ -363,11 +415,19 @@ export function useForum() {
     setShouldAutoScroll(shouldAutoScroll);
   };
 
+  // Reconnect function
+  const reconnect = useCallback(() => {
+    if (sock) {
+      sock.disconnect();
+      sock.connect();
+      setConnectionStatus("connecting");
+    }
+  }, [sock]);
+
   return {
     // State
     email,
     isCurrentUserAdmin,
-    checking,
     messages,
     loadingHistory,
     hasMoreMessages,
@@ -383,8 +443,9 @@ export function useForum() {
     modalImage,
     shouldAutoScroll,
     sock,
+    connectionStatus,
     fileInputRef,
-    
+
     // Actions
     setMessage,
     setEditingText,
@@ -400,5 +461,6 @@ export function useForum() {
     handleImageSelect,
     handleImageRemove,
     handleScrollChange,
+    reconnect,
   };
 }

@@ -4,6 +4,7 @@ import { Terminal } from "@xterm/xterm";
 import { useEffect, useRef } from "react";
 import "@xterm/xterm/css/xterm.css";
 import Navbar from "../_components/global/Navbar";
+import Footer from "../_components/global/Footer";
 
 const TerminalPage = () => {
     const terminalRef = useRef<HTMLDivElement | null>(null);
@@ -45,7 +46,7 @@ const TerminalPage = () => {
 
             if (terminalRef.current) {
                 term.open(terminalRef.current);
-                
+
                 // Initial fit with delay to ensure DOM is ready
                 setTimeout(() => {
                     fitTerminal();
@@ -56,14 +57,14 @@ const TerminalPage = () => {
             try {
                 const wsPort = process.env.NEXT_PUBLIC_TERMINAL_WS_PORT || '5050';
                 const wsUrl = process.env.NODE_ENV === 'production'
-                    ? `ws://${process.env.NEXT_PUBLIC_SERVER_HOST || window.location.hostname}:${wsPort}`
+                    ? `wss://${window.location.host}/terminal-ws`
                     : `ws://localhost:${wsPort}`;
                 console.log("Attempting WebSocket connection to:", wsUrl);
                 wsRef.current = new WebSocket(wsUrl);
 
                 wsRef.current.onopen = () => {
                     term.write("\x1b[32mConnected to terminal server\x1b[0m\r\n");
-                    
+
                     // Send initial resize after connection
                     setTimeout(() => {
                         fitTerminal();
@@ -107,10 +108,10 @@ const TerminalPage = () => {
             // Send resize command to backend
             const sendResizeCommand = (term: Terminal, ws: WebSocket | null) => {
                 if (!ws || ws.readyState !== WebSocket.OPEN) return;
-                
+
                 const cols = term.cols;
                 const rows = term.rows;
-                
+
                 if (cols > 0 && rows > 0) {
                     ws.send(`resize:${cols},${rows}`);
                 }
@@ -177,12 +178,12 @@ const TerminalPage = () => {
                                 <div className="w-3 h-3 rounded-full bg-[#27c93f]" />
                             </div>
                             {/* Make sure the terminal container uses full available space */}
-                            <div 
-                                ref={terminalRef} 
+                            <div
+                                ref={terminalRef}
                                 className="h-[70vh] w-full min-h-[400px]"
-                                style={{ 
-                                    width: '100%', 
-                                    height: '70vh', 
+                                style={{
+                                    width: '100%',
+                                    height: '70vh',
                                     minHeight: '400px',
                                     maxHeight: '90vh'
                                 }}
@@ -191,6 +192,7 @@ const TerminalPage = () => {
                     </div>
                 </div>
             </div>
+            <Footer></Footer>
         </>
     );
 };

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "~/server/db";
+import { getUserFromToken } from "~/lib/auth";
+import { cookies } from "next/headers";
 
 export async function DELETE(
   request: Request,
@@ -8,15 +10,17 @@ export async function DELETE(
   try {
     const { id: messageId } = await params;
     console.log("[DELETE] messageId:", messageId);
-    
+
     if (!messageId) {
       return NextResponse.json({ error: "Message ID is required" }, { status: 400 });
     }
-    
-    // Get the current user email from headers
-    const currentUserEmail = request.headers.get("x-user-email");
-    
-    if (!currentUserEmail) {
+
+    // Get current user from JWT token
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('access_token')?.value;
+    const currentUser = await getUserFromToken(accessToken || '');
+
+    if (!currentUser) {
       return NextResponse.json({ error: "User authentication required" }, { status: 401 });
     }
 
@@ -30,15 +34,10 @@ export async function DELETE(
       return NextResponse.json({ error: "Message not found" }, { status: 404 });
     }
 
-    // Get current user to check admin status
-    const currentUser = await db.user.findUnique({
-      where: { email: currentUserEmail }
-    });
-
     // Check permissions: user can delete their own messages, or admins can delete any message
-    const canDelete = 
-      existingMessage.email === currentUserEmail || // Own message
-      (currentUser?.isAdmin === true); // Admin can delete any message
+    const canDelete =
+      existingMessage.email === currentUser.email || // Own message
+      currentUser.isAdmin; // Admin can delete any message
 
     if (!canDelete) {
       return NextResponse.json({ error: "You don't have permission to delete this message" }, { status: 403 });
@@ -64,10 +63,12 @@ export async function PATCH(
     const { action, imageIndex } = await request.json();
     
     if (action === "remove-image" && typeof imageIndex === "number") {
-      // Get the current user email from headers
-      const currentUserEmail = request.headers.get("x-user-email");
-      
-      if (!currentUserEmail) {
+      // Get current user from JWT token
+      const cookieStore = await cookies();
+      const accessToken = cookieStore.get('access_token')?.value;
+      const currentUser = await getUserFromToken(accessToken || '');
+
+      if (!currentUser) {
         return NextResponse.json({ error: "User authentication required" }, { status: 401 });
       }
       
@@ -81,13 +82,8 @@ export async function PATCH(
         return NextResponse.json({ error: "Message not found" }, { status: 404 });
       }
       
-      // Get current user to check admin status
-      const currentUser = await db.user.findUnique({
-        where: { email: currentUserEmail }
-      });
-
       // Check permissions: only allow editing own messages (even for admins)
-      const canEdit = currentMessage.email === currentUserEmail;
+      const canEdit = currentMessage.email === currentUser.email;
 
       if (!canEdit) {
         return NextResponse.json({ error: "You can only edit your own messages" }, { status: 403 });
@@ -131,10 +127,12 @@ export async function PUT(
     const { id: messageId } = await params;
     const { text, images } = await request.json();
     
-    // Get the current user email from headers
-    const currentUserEmail = request.headers.get("x-user-email");
-    
-    if (!currentUserEmail) {
+    // Get current user from JWT token
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('access_token')?.value;
+    const currentUser = await getUserFromToken(accessToken || '');
+
+    if (!currentUser) {
       return NextResponse.json({ error: "User authentication required" }, { status: 401 });
     }
 
@@ -148,13 +146,8 @@ export async function PUT(
       return NextResponse.json({ error: "Message not found" }, { status: 404 });
     }
 
-    // Get current user to check admin status
-    const currentUser = await db.user.findUnique({
-      where: { email: currentUserEmail }
-    });
-
     // Check permissions: only allow editing own messages (even for admins)
-    const canEdit = existingMessage.email === currentUserEmail;
+    const canEdit = existingMessage.email === currentUser.email;
 
     if (!canEdit) {
       return NextResponse.json({ error: "You can only edit your own messages" }, { status: 403 });

@@ -1,11 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
+import { getUserFromToken } from "~/lib/auth";
+import { cookies } from "next/headers";
 
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
   try {
+    // Check authentication
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get('access_token')?.value;
+    const currentUser = await getUserFromToken(accessToken || '');
+
+    if (!currentUser) {
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
+    }
+
     const formData = await req.formData();
     const file = formData.get("file");
     if (!file || !(file instanceof File)) {
@@ -20,7 +31,7 @@ export async function POST(req: NextRequest) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads");
+    const uploadsDir = path.join("/tmp", "uploads");
     await fs.mkdir(uploadsDir, { recursive: true });
 
     const ext = file.type.split("/")[1] || "png";
@@ -28,7 +39,7 @@ export async function POST(req: NextRequest) {
     const target = path.join(uploadsDir, base);
     await fs.writeFile(target, buffer);
 
-    const url = `/uploads/${base}`;
+    const url = `api/upload/${base}`;
     return NextResponse.json({ url });
   } catch (err) {
     console.error("[upload] error:", err);

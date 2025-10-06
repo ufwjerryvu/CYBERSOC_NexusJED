@@ -3,6 +3,7 @@ import '@fortawesome/fontawesome-free/css/all.min.css';
 
 import { type Metadata } from "next";
 import { Lato } from "next/font/google";
+import { AuthProvider } from "~/contexts/AuthContext";
 
 // import { TRPCReactProvider } from "~/trpc/react";
 
@@ -26,8 +27,10 @@ export default function RootLayout({
   return (
     <html lang="en" className={lato.className}>
       <body>
-        {/* <TRPCReactProvider>{children}</TRPCReactProvider> */}
-        {children}
+        <AuthProvider>
+          {/* <TRPCReactProvider>{children}</TRPCReactProvider> */}
+          {children}
+        </AuthProvider>
       </body>
     </html>
   );

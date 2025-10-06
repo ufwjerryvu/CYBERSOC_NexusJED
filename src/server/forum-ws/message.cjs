@@ -4,12 +4,92 @@ const { Server } = require("socket.io");
 const { PrismaClient } = require("@prisma/client");
 
 if (!process.env.DATABASE_URL) {
-  process.env.DATABASE_URL = "file:./prisma/dev.db";
+  process.env.DATABASE_URL = "file:./dev.db";
 }
+
+console.log("[forum-ws] Using database:", process.env.DATABASE_URL);
 
 const prisma = new PrismaClient();
 
-const server = http.createServer();
+// Debug: Log existing users on startup
+prisma.user.findMany({ select: { id: true, email: true, username: true } })
+  .then(users => {
+    console.log("[forum-ws] Available users in database:", users);
+  })
+  .catch(err => {
+    console.error("[forum-ws] Error querying users:", err);
+  });
+
+// Simple JWT verification for WebSocket
+function verifySocketAuth(auth) {
+  // If auth contains a token, verify it
+  if (auth && auth.token) {
+    try {
+
+      const payload = verifyAccessToken(auth.token);
+      if (payload) {
+        return {
+          userId: payload.userId,
+          email: payload.email,
+          username: payload.username
+        };
+      }
+    } catch (error) {
+      console.error("[forum-ws] JWT verification failed:", error);
+      return null;
+    }
+  }
+  
+  // Fallback to existing logic for backward compatibility
+  if (!auth || !auth.userId || !auth.email || !auth.username) {
+    return null;
+  }
+  return {
+    userId: auth.userId,
+    email: auth.email,
+    username: auth.username
+  };
+}
+
+// Create HTTP server with request handler
+const server = http.createServer((req, res) => {
+  // Set CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  // Handle CORS preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  // Health check endpoint
+  if (req.url === '/health' || req.url === '/') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ 
+      status: 'healthy',
+      service: 'forum-websocket',
+      timestamp: new Date().toISOString(),
+      database: 'connected'
+    }));
+    return;
+  }
+
+  // Socket.IO endpoints - let Socket.IO handle these
+  if (req.url && req.url.startsWith('/message/socket.io')) {
+    // Return 404 for Socket.IO paths that aren't handled
+    res.writeHead(404);
+    res.end('Not Found');
+    return;
+  }
+
+  // Default response for other routes
+  res.writeHead(200, { 'Content-Type': 'text/plain' });
+  res.end('Forum WebSocket Server\n');
+});
+
 const io = new Server(server, {
   path: "/message",
   cors: {
@@ -20,23 +100,59 @@ const io = new Server(server, {
 io.on("connection", (socket) => {
   console.log("[forum-ws] client connected", socket.id);
 
+  // Verify authentication on connection
+  const auth = verifySocketAuth(socket.handshake.auth);
+  if (!auth) {
+    console.log("[forum-ws] unauthorized connection attempt", socket.id);
+    socket.emit("chat:error", { message: "Authentication required" });
+    socket.disconnect();
+    return;
+  }
+
+  socket.userId = auth.userId;
+  socket.userEmail = auth.email;
+  socket.username = auth.username;
+
+  console.log("[forum-ws] authenticated user connected", auth.username, socket.id);
+
   socket.on("chat:message", async (payload) => {
     try {
-      const email = payload && typeof payload.email === "string" ? payload.email : "";
       const text = payload && typeof payload.text === "string" ? payload.text : "";
       const images = Array.isArray(payload && payload.images)
         ? (payload.images || []).filter((u) => typeof u === "string" && u.length > 0)
         : [];
 
-      // Require email and at least text or one image
-      if (!email || (!text && images.length === 0)) {
-        socket.emit("chat:error", { message: "Invalid payload" });
+      // Require at least text or one image
+      if (!text && images.length === 0) {
+        socket.emit("chat:error", { message: "Message must have text or images" });
         return;
       }
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  const admin_attr = Boolean(user && user.isAdmin);
-  const username = (user && user.username) || (email.includes("@") ? email.split("@")[0] : email);
+      // Get user info from database
+      console.log("[forum-ws] Looking for user with ID:", socket.userId);
+      let user = await prisma.user.findUnique({ where: { id: socket.userId } });
+
+      // If user not found by ID, try to find by email as fallback
+      if (!user && socket.userEmail) {
+        console.log("[forum-ws] User not found by ID, trying email:", socket.userEmail);
+        user = await prisma.user.findUnique({ where: { email: socket.userEmail } });
+        if (user) {
+          console.log("[forum-ws] Found user by email:", user.email, "with ID:", user.id);
+          // Update socket userId to the correct one
+          socket.userId = user.id;
+        }
+      }
+
+      if (!user) {
+        console.log("[forum-ws] User not found in database with ID:", socket.userId);
+        console.log("[forum-ws] Auth data was:", { userId: socket.userId, email: socket.userEmail, username: socket.username });
+        socket.emit("chat:error", { message: "User not found - please log out and log back in" });
+        return;
+      }
+      console.log("[forum-ws] Found user:", { id: user.id, email: user.email, username: user.username });
+
+      const admin_attr = Boolean(user.isAdmin);
+      const username = user.username || socket.username;
 
       // Persist message with graceful fallback if Prisma client hasn't been regenerated yet
       let saved;
@@ -47,8 +163,8 @@ io.on("connection", (socket) => {
             image: images.length === 1 ? images[0] : null, // legacy single image
             // @ts-ignore - 'images' is a new JSON column; types update after prisma generate
             images: images.length > 0 ? images : null,     // preferred array
-            email,
-            userId: user ? user.id : (await ensureUser(email)).id,
+            email: user.email,
+            userId: user.id,
             channel: "general",
           },
           include: { user: true },
@@ -60,8 +176,8 @@ io.on("connection", (socket) => {
           data: {
             text: text || null,
             image: images.length > 0 ? images[0] : null,
-            email,
-            userId: user ? user.id : (await ensureUser(email)).id,
+            email: user.email,
+            userId: user.id,
             channel: "general",
           },
           include: { user: true },
@@ -72,7 +188,7 @@ io.on("connection", (socket) => {
         id: saved.id,
         text: saved.text || "",
         images: images.length > 0 ? images : (saved.image ? [saved.image] : undefined),
-        email: saved.email || email,
+        email: saved.email || user.email,
         username,
         admin_attr,
         ts: new Date(saved.createdAt).getTime(),
@@ -143,7 +259,6 @@ io.on("connection", (socket) => {
   });
 });
 
-
 function resolvePort() {
   if (process.env.FORUM_WS_PORT) return parseInt(process.env.FORUM_WS_PORT, 10);
   if (process.env.WEBSOCKET_URL) {
@@ -151,26 +266,20 @@ function resolvePort() {
       const u = new URL(process.env.WEBSOCKET_URL);
       if (u.port) return parseInt(u.port, 10);
       return u.protocol === "https:" ? 443 : 80;
-    } catch (_) {
- 
-    }
+    } catch (_) {}
   }
   return 8000;
 }
 
 const PORT = resolvePort();
-server.listen(PORT, () => {
-  console.log(`[forum-ws] listening on http://localhost:${PORT} (path: /message)`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`[forum-ws] listening on http://0.0.0.0:${PORT} (path: /message)`);
+  console.log(`[forum-ws] Health endpoint: http://0.0.0.0:${PORT}/health`);
+});
+
+// Add error handling
+server.on('error', (error) => {
+  console.error('[forum-ws] Server error:', error);
 });
 
 module.exports = { io };
-
-/**
- * @param {string} email
- */
-async function ensureUser(email) {
-  // create minimal user if not exists to satisfy FK
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) return existing;
-  return prisma.user.create({ data: { email, isAdmin: false } });
-}
